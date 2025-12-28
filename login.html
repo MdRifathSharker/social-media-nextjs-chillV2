@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>😎Chill😎 | Auth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+
+<button class="mode-toggle" onclick="toggleMode()">🌗</button>
+
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <h1 class="app-title">😎Chill😎</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showForm('login')">Login</button>
+      <button class="tab" onclick="showForm('register')">Register</button>
+      <button class="tab" onclick="showForm('forgot')">Forgot Password</button>
+    </div>
+
+    <!-- LOGIN -->
+    <form id="loginForm" class="form">
+      <input type="email" placeholder="Email" required />
+      <input type="password" placeholder="Password" required />
+      <button class="primary-btn">Login</button>
+
+      <div class="divider">or</div>
+      <button type="button" class="google-btn">Continue with Google</button>
+    </form>
+
+    <!-- REGISTER -->
+    <form id="registerForm" class="form hidden">
+      <input type="text" placeholder="Full Name" required />
+      <input type="email" placeholder="Email" required />
+      <input type="password" placeholder="Password" required />
+      <button class="primary-btn">Create Account</button>
+    </form>
+
+    <!-- FORGOT PASSWORD -->
+    <form id="forgotForm" class="form hidden">
+
+      <!-- STEP 1 -->
+      <div id="forgotStep1">
+        <input type="email" placeholder="Enter your email" required />
+        <button type="button" class="primary-btn" onclick="showForgotStep2()">
+          Send Code
+        </button>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="forgotStep2" class="hidden">
+        <input type="text" placeholder="Verification Code" required />
+        <input type="password" placeholder="New Password" required />
+        <input type="password" placeholder="Confirm Password" required />
+        <button class="primary-btn">Update Password</button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<!-- JS -->
+<script src="js/auth.js"></script>
+</body>
+</html>

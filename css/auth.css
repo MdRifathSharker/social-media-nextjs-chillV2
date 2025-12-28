@@ -1,0 +1,175 @@
+/* ---------- COLOR VARIABLES ---------- */
+
+:root {
+  --primary: #3EB489;
+  --secondary: #1E1E1E;
+  --accent: #F5F7F4;
+  --text: #101108;
+  --bg: #ffffff;
+}
+
+body.dark {
+  --primary: #4cc297;
+  --secondary: #e0e0e0;
+  --accent: #0a0c09;
+  --text: #f6f7ee;
+  --bg: #000000;
+}
+
+/* ---------- RESET ---------- */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
+/* ---------- BASE ---------- */
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ---------- WRAPPER ---------- */
+
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* ---------- MODE TOGGLE ---------- */
+
+.mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--primary);
+  border: none;
+  padding: 10px 14px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* ---------- CARD ---------- */
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--accent);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- TITLE ---------- */
+
+.app-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ---------- TABS ---------- */
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  border-bottom-color: var(--primary);
+}
+
+/* ---------- FORMS ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--secondary);
+  background: transparent;
+  color: var(--text);
+}
+
+/* ---------- BUTTONS ---------- */
+
+.primary-btn {
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  font-weight: bold;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+/* GOOGLE BUTTON – FIXED */
+
+.google-btn {
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid var(--secondary);
+  background: transparent;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* DARK MODE GOOGLE BUTTON FIX */
+body.dark .google-btn {
+  border-color: var(--secondary);
+  color: var(--secondary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- DIVIDER ---------- */
+
+.divider {
+  text-align: center;
+  opacity: 0.6;
+}
+
+/* ---------- FORGOT STEPS ---------- */
+
+#forgotStep1,
+#forgotStep2 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- UTIL ---------- */
+
+.hidden {
+  display: none;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 20px;
+  }
+}
