@@ -1,15 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
 export default function Home() {
-  const [active, setActive] = useState(false); 
-  const [isSignUp, setIsSignUp] = useState(false); 
-  const [isForgot, setIsForgot] = useState(false); 
-  const [forgotStep, setForgotStep] = useState(1); 
+  const [active, setActive] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1);
   const [password, setPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
+
+  const router = useRouter();
 
   const initialWidth = "20rem";
   const initialHeight = "20rem";
@@ -46,7 +49,7 @@ export default function Home() {
 
       {/* Logo */}
       <div
-        className={`absolute transition-all duration-700`}
+        className="absolute transition-all duration-700"
         style={{
           top: active ? "1rem" : "50%",
           left: active ? "auto" : "50%",
@@ -64,7 +67,7 @@ export default function Home() {
         />
       </div>
 
-      {/* Sign in */}
+      {/* Floating Sign In Button */}
       {!active && (
         <button
           onClick={() => setActive(true)}
@@ -76,8 +79,9 @@ export default function Home() {
 
       {/* Form Box */}
       <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ${active ? "opacity-100 scale-100" : "opacity-0 scale-90"
-          }`}
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ${
+          active ? "opacity-100 scale-100" : "opacity-0 scale-90"
+        }`}
       >
         <form className="flex flex-col gap-4 bg-primary p-6 rounded shadow-md w-80">
 
@@ -96,10 +100,13 @@ export default function Home() {
                     Submit Email
                   </button>
                   <div className="text-center text-sm text-white">
-                    <button onClick={() => setIsForgot(false)} className="underline">Back to Sign In</button>
+                    <button onClick={() => setIsForgot(false)} className="underline">
+                      Back to Sign In
+                    </button>
                   </div>
                 </>
               )}
+
               {forgotStep === 2 && (
                 <>
                   <h2 className="text-xl font-bold text-center text-white">Enter OTP</h2>
@@ -113,6 +120,7 @@ export default function Home() {
                   </button>
                 </>
               )}
+
               {forgotStep === 3 && (
                 <>
                   <h2 className="text-xl font-bold text-center text-white">Set New Password</h2>
@@ -124,7 +132,7 @@ export default function Home() {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   {passwordStrength && (
-                    <span className={`text-sm ${passwordStrength === "Weak" ? "text-white-500" : passwordStrength === "Medium" ? "text-yellow-400" : "text-green-400"}`}>
+                    <span className="text-sm text-white">
                       Password Strength: {passwordStrength}
                     </span>
                   )}
@@ -132,7 +140,6 @@ export default function Home() {
                     type="button"
                     className="bg-accent text-primary py-2 rounded font-semibold"
                     onClick={() => {
-
                       setIsForgot(false);
                       setIsSignUp(false);
                       setForgotStep(1);
@@ -143,10 +150,8 @@ export default function Home() {
                   </button>
                 </>
               )}
-
             </>
           ) : isSignUp ? (
-            /* Sign Up Form */
             <>
               <h2 className="text-xl font-bold text-center text-white">Sign Up</h2>
               <input type="text" placeholder="Full Name" className="p-2 rounded border border-white text-black" />
@@ -159,23 +164,22 @@ export default function Home() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              {passwordStrength && (
-                <span className={`text-sm ${passwordStrength === "Weak" ? "text-white-500" : passwordStrength === "Medium" ? "text-yellow-400" : "text-green-400"}`}>
-                  Password Strength: {passwordStrength}
-                </span>
-              )}
-              <button className="bg-accent text-primary py-2 rounded font-semibold">Sign Up</button>
+              <button className="bg-accent text-primary py-2 rounded font-semibold">
+                Sign Up
+              </button>
               <div className="text-center text-sm text-white">
                 Already registered?{" "}
-                <button className="underline" onClick={() => setIsSignUp(false)}>Sign In</button>
+                <button className="underline" onClick={() => setIsSignUp(false)}>
+                  Sign In
+                </button>
               </div>
             </>
           ) : (
-            /* Sign In Form */
             <>
               <h2 className="text-xl font-bold text-center text-white">Sign In</h2>
               <input type="email" placeholder="Email" className="p-2 border rounded border-white bg-white text-text" />
               <input type="password" placeholder="Password" className="p-2 border rounded border-white bg-white text-text" />
+
               <button
                 type="button"
                 className="text-sm text-black text-left"
@@ -186,10 +190,21 @@ export default function Home() {
               >
                 Forgot Password?
               </button>
-              <button className="bg-accent text-primary py-2 rounded font-semibold">Sign In</button>
+
+              {/* ✅ FIXED BUTTON */}
+              <button
+                type="button"
+                className="bg-accent text-primary py-2 rounded font-semibold"
+                onClick={() => router.push("/home")}
+              >
+                Sign In
+              </button>
+
               <div className="text-center text-sm text-white">
                 Not yet registered?{" "}
-                <button className="underline" onClick={() => setIsSignUp(true)}>Sign Up</button>
+                <button className="underline" onClick={() => setIsSignUp(true)}>
+                  Sign Up
+                </button>
               </div>
             </>
           )}
