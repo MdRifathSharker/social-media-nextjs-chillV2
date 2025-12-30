@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { useRouter } from 'next/navigation';
 import Image from "next/image";
 import emailjs from "@emailjs/browser";
 import { createClient } from "@supabase/supabase-js";
@@ -96,11 +98,11 @@ const sendOTPEmail = async (email, otp, userName = "") => {
       templateParams
     );
     
-    console.log("✅ Email sent successfully! Status:", response.status);
+    console.log("Email sent successfully! Status:", response.status);
     return { success: true };
     
   } catch (err) {
-    console.error("❌ EmailJS Error:", err);
+    console.error("EmailJS Error:", err);
     // Even if email fails, return OTP for display
     return { 
       success: true, 
@@ -113,7 +115,7 @@ const sendOTPEmail = async (email, otp, userName = "") => {
 // Complete Registration - WITHOUT Supabase Auth (Database only)
 const completeUserRegistration = async (email, password, name, contact = "") => {
   try {
-    console.log("🚀 Starting registration for:", email);
+    console.log("Starting registration for:", email);
     
     // Check if user exists
     const { exists } = await checkUserExists(email);
@@ -158,7 +160,7 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
       .single();
     
     if (error) {
-      console.error("❌ Database error:", {
+      console.error("Database error:", {
         message: error.message,
         code: error.code,
         details: error.details
@@ -181,7 +183,7 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
       return { error: "Database error: " + error.message };
     }
     
-    console.log("✅ User registered successfully:", data.email);
+    console.log("User registered successfully:", data.email);
     
     // Try to create auth user (optional, not required for login)
     try {
@@ -197,12 +199,12 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
       });
       
       if (authError) {
-        console.log("⚠️ Auth creation optional - not required:", authError.message);
+        console.log("Auth creation optional - not required:", authError.message);
       } else {
-        console.log("✅ Auth user created as well");
+        console.log("Auth user created as well");
       }
     } catch (authErr) {
-      console.log("⚠️ Auth creation skipped:", authErr.message);
+      console.log("Auth creation skipped:", authErr.message);
     }
     
     return { 
@@ -212,7 +214,7 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
     };
     
   } catch (error) {
-    console.error("❌ Registration error:", error);
+    console.error("Registration error:", error);
     return { error: "Registration failed: " + error.message };
   }
 };
@@ -220,7 +222,7 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
 // Login User - FIXED VERSION (Database only, no auth dependency)
 const loginUser = async (email, password) => {
   try {
-    console.log("🔐 Attempting login for:", email);
+    console.log("Attempting login for:", email);
     
     // Get user from database
     const { data: user, error } = await supabase
@@ -253,7 +255,7 @@ const loginUser = async (email, password) => {
       return { error: "Invalid email or password" };
     }
     
-    console.log("✅ Login successful for:", email);
+    console.log("Login successful for:", email);
     
     // Try to sign in with Supabase Auth (optional)
     try {
@@ -263,13 +265,13 @@ const loginUser = async (email, password) => {
       });
       
       if (authError) {
-        console.log("⚠️ Supabase auth login failed (optional):", authError.message);
+        console.log("Supabase auth login failed (optional):", authError.message);
         // Continue with database login anyway
       } else {
-        console.log("✅ Supabase auth login successful");
+        console.log("Supabase auth login successful");
       }
     } catch (authErr) {
-      console.log("⚠️ Supabase auth skipped:", authErr.message);
+      console.log("Supabase auth skipped:", authErr.message);
     }
     
     return { 
@@ -288,7 +290,7 @@ const loginUser = async (email, password) => {
     };
     
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error("Login error:", error);
     return { error: "Login failed: " + error.message };
   }
 };
@@ -326,7 +328,7 @@ const checkUserForPasswordReset = async (email) => {
 // Reset Password - FIXED VERSION
 const resetPassword = async (email, newPassword) => {
   try {
-    console.log("🔐 Resetting password for:", email);
+    console.log("Resetting password for:", email);
     
     // Hash new password
     const hashedPassword = await hashPassword(newPassword);
@@ -349,7 +351,7 @@ const resetPassword = async (email, newPassword) => {
       return { error: "User not found" };
     }
     
-    console.log("✅ Password updated in database");
+    console.log("Password updated in database");
     
     // Try to update in Supabase Auth (optional)
     try {
@@ -358,12 +360,12 @@ const resetPassword = async (email, newPassword) => {
       });
       
       if (authError) {
-        console.log("⚠️ Auth password update failed (optional):", authError.message);
+        console.log("Auth password update failed (optional):", authError.message);
       } else {
-        console.log("✅ Auth password updated successfully");
+        console.log("Auth password updated successfully");
       }
     } catch (authError) {
-      console.log("⚠️ Auth update skipped:", authError.message);
+      console.log("Auth update skipped:", authError.message);
     }
     
     return { 
@@ -372,18 +374,25 @@ const resetPassword = async (email, newPassword) => {
     };
     
   } catch (error) {
-    console.error("❌ Reset password error:", error);
+    console.error("Reset password error:", error);
     return { error: error.message || "Password reset failed" };
   }
 };
 
 // Main Component
 export default function Home() {
+  const router = useRouter(); 
+  const [darkMode, setDarkMode] = useState(false);
   const [active, setActive] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isResetPassword, setIsResetPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+const [showNewPassword, setShowNewPassword] = useState(false);
+const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -399,18 +408,27 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [darkMode]);
+
+
   // Initialize EmailJS
   useEffect(() => {
     const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
     if (publicKey) {
       try {
         emailjs.init(publicKey);
-        console.log("✅ EmailJS initialized");
+        console.log("EmailJS initialized");
       } catch (err) {
         console.warn("EmailJS init warning:", err.message);
       }
     } else {
-      console.warn("⚠️ EmailJS public key not found");
+      console.warn("EmailJS public key not found");
     }
   }, []);
 
@@ -449,7 +467,7 @@ export default function Home() {
     setSuccessMessage("");
     
     try {
-      console.log("🔍 Checking if user exists...");
+      console.log("Checking if user exists...");
       const { exists } = await checkUserExists(email);
       
       if (exists) {
@@ -471,7 +489,7 @@ export default function Home() {
       });
 
       // Send OTP Email
-      console.log("📧 Sending OTP email...");
+      console.log("Sending OTP email...");
       const emailResult = await sendOTPEmail(email, otp, fullName);
       
       if (emailResult.error) {
@@ -480,7 +498,7 @@ export default function Home() {
         return;
       }
 
-      setSuccessMessage("✅ OTP sent to your email! Check your inbox.");
+      setSuccessMessage("OTP sent to your email! Check your inbox.");
       setIsVerifying(true);
       
     } catch (error) {
@@ -526,7 +544,7 @@ export default function Home() {
       });
 
       // Send OTP email
-      console.log("📧 Sending password reset OTP...");
+      console.log("Sending password reset OTP...");
       const emailResult = await sendOTPEmail(email, otp, result.user?.name);
       
       if (emailResult.error) {
@@ -535,7 +553,7 @@ export default function Home() {
         return;
       }
 
-      setSuccessMessage("✅ Password reset OTP sent to your email!");
+      setSuccessMessage("Password reset OTP sent to your email!");
       setIsForgotPassword(false);
       setIsVerifying(true);
       
@@ -572,7 +590,7 @@ export default function Home() {
 
     if (tempUserData.purpose === "registration") {
       try {
-        console.log("✅ OTP verified. Starting registration...");
+        console.log("OTP verified. Starting registration...");
         const result = await completeUserRegistration(
           tempUserData.email,
           tempUserData.password,
@@ -582,7 +600,7 @@ export default function Home() {
 
         if (result.error) {
           if (result.userExists) {
-            setErrorMessage("✅ An account with this email already exists. Please login instead.");
+            setErrorMessage("An account with this email already exists. Please login instead.");
             setTimeout(() => {
               resetForm();
               setIsSignUp(false);
@@ -592,7 +610,7 @@ export default function Home() {
             setErrorMessage(result.error);
           }
         } else {
-          setSuccessMessage("✅ Registration successful! You can login now.");
+          setSuccessMessage("Registration successful! You can login now.");
           setTimeout(() => {
             resetForm();
             setIsVerifying(false);
@@ -609,7 +627,7 @@ export default function Home() {
     else if (tempUserData.purpose === "forgot_password") {
       setIsVerifying(false);
       setIsResetPassword(true);
-      setSuccessMessage("✅ OTP verified! Set new password.");
+      setSuccessMessage("OTP verified! Set new password.");
       setLoading(false);
     }
   };
@@ -639,7 +657,7 @@ export default function Home() {
       if (result.error) {
         setErrorMessage(result.error);
       } else {
-        setSuccessMessage("✅ Password updated! You can login now.");
+        setSuccessMessage("Password updated! You can login now.");
         setTimeout(() => {
           resetForm();
         }, 3000);
@@ -670,7 +688,7 @@ export default function Home() {
       if (result.error) {
         setErrorMessage(result.error);
       } else {
-        setSuccessMessage("✅ Login successful! Redirecting...");
+        setSuccessMessage("Login successful! Redirecting...");
         
         // Store user data in localStorage
         if (typeof window !== 'undefined') {
@@ -690,9 +708,8 @@ export default function Home() {
           localStorage.setItem('session', JSON.stringify(sessionData));
         }
         
-        // Redirect to GitHub page
         setTimeout(() => {
-          window.location.href = "https://github.com/MdRifathSharker/social-media-nextjs-chillV2";
+          router.push('/home');
         }, 1500);
       }
     } catch (error) {
@@ -759,7 +776,6 @@ export default function Home() {
             // Auto-fill email if user was recently logged in
             setEmail(sessionData.userEmail || "");
           } else {
-            // Clear expired session
             localStorage.removeItem('session');
             localStorage.removeItem('isLoggedIn');
           }
@@ -771,7 +787,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="fixed w-screen h-screen flex items-center justify-center bg-bg text-black">
+    <main className="fixed w-screen h-screen flex items-center justify-center bg-bg text-text dark:bg-bg-dark dark:text-text-dark transition-colors duration-500">
       {/* Logo */}
       <div className={`absolute transition-all duration-700`}
         style={{
@@ -809,7 +825,7 @@ export default function Home() {
             {/* Messages */}
             {errorMessage && (
               <div className={`p-3 rounded-lg text-sm ${
-                errorMessage.includes("✅") 
+                errorMessage.includes("") 
                   ? "bg-yellow-100 border border-yellow-300 text-yellow-700" 
                   : "bg-red-100 border border-red-300 text-red-700"
               }`}>
@@ -876,7 +892,7 @@ export default function Home() {
                 
                 <input 
                   type="password"
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="New Password (6+ characters)"
                   value={newPassword} 
                   onChange={(e) => setNewPassword(e.target.value)} 
@@ -884,13 +900,12 @@ export default function Home() {
                 />
                 <input 
                   type="password"
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Confirm New Password"
                   value={confirmNewPassword} 
                   onChange={(e) => setConfirmNewPassword(e.target.value)} 
                   disabled={loading}
                 />
-                
                 <div className="flex gap-2">
                   <button 
                     type="button"
@@ -910,15 +925,13 @@ export default function Home() {
                 </div>
               </>
             ) : 
-            
-            /* Forgot Password Form */
             isForgotPassword ? (
               <>
                 <h2 className="text-white font-bold text-center text-2xl mb-2">Forgot Password</h2>
                 <p className="text-white text-sm text-center mb-4">Enter your email to reset password</p>
                 
                 <input 
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Email Address"
                   type="email"
                   value={email} 
@@ -952,7 +965,7 @@ export default function Home() {
                 <h2 className="text-white font-bold text-center text-2xl mb-2">Create Account</h2>
                 
                 <input 
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                 className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Full Name *"
                   value={fullName} 
                   onChange={(e) => setFullName(e.target.value)} 
@@ -960,7 +973,7 @@ export default function Home() {
                   required
                 />
                 <input 
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Email Address *"
                   type="email"
                   value={email} 
@@ -969,7 +982,7 @@ export default function Home() {
                   required
                 />
                 <input 
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Phone (Optional)"
                   value={contact} 
                   onChange={(e) => setContact(e.target.value)} 
@@ -977,7 +990,7 @@ export default function Home() {
                 />
                 <input 
                   type="password"
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Password (6+ characters) *"
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
@@ -987,7 +1000,7 @@ export default function Home() {
                 />
                 <input 
                   type="password"
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Confirm Password *"
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)} 
@@ -1024,7 +1037,7 @@ export default function Home() {
                 <p className="text-white text-sm text-center mb-4">Sign in to your account</p>
                 
                 <input 
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Email Address"
                   type="email"
                   value={email} 
@@ -1033,7 +1046,7 @@ export default function Home() {
                 />
                 <input 
                   type="password"
-                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white"
+                  className="p-3 rounded-lg outline-none placeholder-gray-500 bg-white dark:bg-bg-dark dark:text-text-dark dark:placeholder-gray-400"
                   placeholder="Password"
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 

@@ -40,11 +40,6 @@ export default function HomePage() {
   return (
     <main className="min-h-screen w-screen flex bg-bg text-text dark:bg-bg-dark dark:text-text-dark transition-colors duration-500">
 
-      {/* Dark/Light Mode Toggle - top-left */}
-      <div className="absolute top-4 left-4 z-50">
-        <ThemeToggle />
-      </div>
-
       {/* Logo - top-right */}
       <div className="absolute top-4 right-4 w-24 h-24">
         <Image src="/LogoUpdate.png" alt="Logo" fill style={{ objectFit: "contain" }} />
@@ -66,26 +61,41 @@ export default function HomePage() {
         <div className="w-1/4 pl-4 flex flex-col items-center sticky top-32 h-[calc(100vh-8rem)] relative">
 
           {/* Profile Details Box */}
+          {/* Profile Details Box */}
           {showProfileDetails && (
             <div
-              className="absolute top-0 left-0 bg-primary-dark dark:bg-accent-dark text-white rounded shadow p-4 overflow-y-auto flex flex-col items-center"
-              style={{ width: 'calc(85% - 2px)', height: 'calc(100% - 68px)' }}
+              className="absolute top-0 left-0 bg-white dark:bg-bg-dark text-text dark:text-text-dark rounded-xl shadow-lg p-6 overflow-y-auto flex flex-col items-center w-[280px] max-w-full"
+              style={{ height: 'calc(100% - 68px)' }}
             >
               {/* Profile Picture */}
-              <div className="w-20 h-20 mb-4 relative">
-                <Image src="/profile-pic.png" alt="Profile Picture" fill className="rounded-full object-cover" />
+              <div className="w-24 h-24 mb-4 relative">
+                <Image
+                  src="/profile-pic.png"
+                  alt="Profile Picture"
+                  fill
+                  className="rounded-full object-cover border-4 border-primary dark:border-accent"
+                />
               </div>
 
-              {/* Profile Details */}
-              <h2 className="text-xl font-bold mb-2">John Doe</h2>
-              <p className="text-sm mb-1">@johndoe</p>
-              <p className="text-sm mb-1">Bio: Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-              <p className="text-sm mb-1">Address: 123 Main St, City</p>
-              <p className="text-sm mb-1">Contact: john@example.com</p>
-              <p className="text-sm mb-1">Website: www.example.com</p>
-              <p className="text-sm">Additional info can go here.</p>
+              {/* Name and Username */}
+              <h2 className="text-2xl font-semibold mb-1 text-center">John Doe</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">@johndoe</p>
+
+              {/* Info Sections */}
+              <div className="flex flex-col gap-3 w-full">
+                <p className="text-sm"><span className="font-semibold">Bio:</span> Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p className="text-sm"><span className="font-semibold">Address:</span> 123 Main St, City</p>
+                <p className="text-sm"><span className="font-semibold">Contact:</span> john@example.com</p>
+                <p className="text-sm"><span className="font-semibold">Website:</span> www.example.com</p>
+              </div>
+
+              {/* Optional Footer / Extra Info */}
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">
+                Additional info can go here.
+              </p>
             </div>
           )}
+
 
           {/* Notifications Box */}
           {showNotifications && (
@@ -133,7 +143,7 @@ export default function HomePage() {
           )}
 
           {/* Bottom 4 Buttons */}
-          <div className="absolute bottom-4 right-4 flex gap-4 w-[90%] justify-between">
+          <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4">
             <button onClick={() => { setShowFollowers(!showFollowers); setShowMessages(false); setShowNotifications(false); setShowProfileDetails(false); }}>
               <Image src="/icons/followers.png" alt="Followers" width={32} height={32} />
             </button>
@@ -151,28 +161,11 @@ export default function HomePage() {
             </button>
           </div>
 
+
+
         </div>
 
       </div>
     </main>
-  );
-}
-
-/* Dark/Light Mode Toggle */
-function ThemeToggle() {
-  const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  }, [darkMode]);
-
-  return (
-    <button
-      onClick={() => setDarkMode(!darkMode)}
-      className="px-4 py-2 rounded bg-primary text-white dark:bg-primary-dark dark:text-black"
-    >
-      {darkMode ? "Light Mode" : "Dark Mode"}
-    </button>
   );
 }
