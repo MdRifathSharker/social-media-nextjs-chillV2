@@ -1,0 +1,53 @@
+-- Users table -- 
+CREATE TABLE users (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  username TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  contact TEXT,
+  password TEXT, -- Note: Handled by Supabase Auth, but kept for your schema
+  profile_image TEXT,
+  bio TEXT,
+  followers_count INTEGER DEFAULT 0,
+  following_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Post table --
+CREATE TABLE posts (
+  post_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  original_post_id UUID REFERENCES posts(post_id) ON DELETE SET NULL,
+  image_url TEXT,
+  caption TEXT,
+  likes_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Comments Table
+CREATE TABLE comments (
+  comment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(post_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  comment_text TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Likes Table
+CREATE TABLE likes (
+  like_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(post_id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(post_id, user_id) -- Prevents a user from liking the same post twice
+);
+
+-- Follows Table (Relationship between two users)
+CREATE TABLE follows (
+  follow_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  following_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(follower_id, following_id) -- Prevents duplicate follows
+);
