@@ -11,6 +11,8 @@ import SearchBar from "@/components/SearchBar";
 import AllPostsContent from "@/components/newsfeed/AllPostsContent";
 import MyPostsContent from "@/components/newsfeed/MyPostsContent";
 import CreatePostContent from "@/components/newsfeed/CreatePostContent";
+import CreatePostContentV2 from "@/components/newsfeed/CreatePostContent-v2";
+import MyPostsContentV2 from "@/components/newsfeed/MyPostsContent-v2";
 
 export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
@@ -79,8 +81,8 @@ export default function HomePage() {
           {/* Scrollable newsfeed content */}
           <div className="flex-1 overflow-y-auto">
             {activeTab === "all" && <AllPostsContent currentUser={currentUser} />}
-            {activeTab === "my" && <MyPostsContent currentUser={currentUser} />}
-            {activeTab === "create" && <CreatePostContent currentUser={currentUser} />}
+            {activeTab === "my" && <MyPostsContentV2 currentUser={currentUser} />}
+            {activeTab === "create" && <CreatePostContentV2 currentUser={currentUser} />}
           </div>
 
         </div>
