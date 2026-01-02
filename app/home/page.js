@@ -2,168 +2,91 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import Post from "@/components/post"; // keep as-is
+import AllPostsButton from "@/components/buttons/AllPostsButton";
+import MyPostsButton from "@/components/buttons/MyPostsButton";
+import CreatePostButton from "@/components/buttons/CreatePostButton";
+import Sidebar from "@/components/sidebar/Sidebar";
+import SearchBar from "@/components/SearchBar";
+
+import AllPostsContent from "@/components/newsfeed/AllPostsContent";
+import MyPostsContent from "@/components/newsfeed/MyPostsContent";
+import CreatePostContent from "@/components/newsfeed/CreatePostContent";
 
 export default function HomePage() {
-  const router = useRouter();
-  const [showProfileDetails, setShowProfileDetails] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showMessages, setShowMessages] = useState(false);
-  const [showFollowers, setShowFollowers] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [activeTab, setActiveTab] = useState("all"); 
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const posts = [
-    { name: "Alice", username: "alice123", image: "https://picsum.photos/600/400?random=1", caption: "Hello world!" },
-    { name: "Bob", username: "bob456", image: "https://picsum.photos/600/400?random=2", caption: "Chill vibes today 😎" },
-    { name: "Charlie", username: "charlie789", image: "https://picsum.photos/600/400?random=3", caption: "This is a beautiful day!" },
-  ];
+  useEffect(() => {
+  if (typeof window !== "undefined") {
+    const userId = localStorage.getItem("userId");
+    const userName = localStorage.getItem("userName");
+    const userEmail = localStorage.getItem("userEmail");
 
-  // Sample notifications
-  const notifications = [
-    "Alice liked your post.",
-    "Bob commented on your post.",
-    "Charlie followed you.",
-    "New message from David.",
-  ];
+    if (userId && userEmail) {
+      setCurrentUser({
+        user_id: userId,
+        name: userName,
+        email: userEmail
+      });
+    }
+  }
+}, []);
 
-  // Sample messages
-  const messages = [
-    "Alice: Hey! How are you?",
-    "Bob: Let's catch up later.",
-    "Charlie: Did you see my post?",
-    "David: Meeting at 5pm.",
-  ];
 
-  // Sample followers
-  const followers = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"];
 
   return (
-    <main className="min-h-screen w-screen flex bg-bg text-text dark:bg-bg-dark dark:text-text-dark transition-colors duration-500">
+    <main className={`${darkMode ? "dark" : ""} min-h-screen w-screen bg-bg text-text transition-colors duration-500 overflow-hidden`}>
+      
+      {/* Top Bar: Logo + Dark Mode */}
+      <div className="fixed top-0 left-0 w-full flex justify-between items-center p-4 bg-bg dark:bg-bg-dark z-50 shadow-md">
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={() => setDarkMode(prev => !prev)}
+          className="px-4 py-2 bg-primary dark:bg-accent text-white rounded-lg shadow-md"
+        >
+          {darkMode ? "Light Mode" : "Dark Mode"}
+        </button>
 
-      {/* Logo - top-right */}
-      <div className="absolute top-4 right-4 w-24 h-24">
-        <Image src="/LogoUpdate.png" alt="Logo" fill style={{ objectFit: "contain" }} />
+        {/* Search Bar */}
+        <div className="flex-1 flex justify-center">
+          <SearchBar onSearch={(query) => console.log("Search query:", query)} />
+        </div>
+
+        {/* Logo */}
+        <div className="w-24 h-24 relative">
+          <img
+            src="/chill_logo.gif"
+            alt="Logo"
+            className="w-full h-full object-contain"
+          />
+        </div>
       </div>
 
-      {/* Main Layout */}
-      <div className="flex flex-1 h-screen pt-32">
 
-        {/* Posts Area - 3/4 width, scrollable */}
-        <div className="w-3/4 pr-4 overflow-y-auto">
-          {posts.map((p, i) => (
-            <div key={i} className="mb-4">
-              <Post name={p.name} username={p.username} image={p.image} caption={p.caption} />
-            </div>
-          ))}
-        </div>
+      {/* Main Content */}
+      <div className="flex h-screen pt-32 px-4 gap-4">
 
-        {/* Profile Area - 1/4 width, fixed */}
-        <div className="w-1/4 pl-4 flex flex-col items-center sticky top-32 h-[calc(100vh-8rem)] relative">
-
-          {/* Profile Details Box */}
-          {/* Profile Details Box */}
-          {showProfileDetails && (
-            <div
-              className="absolute top-0 left-0 bg-white dark:bg-bg-dark text-text dark:text-text-dark rounded-xl shadow-lg p-6 overflow-y-auto flex flex-col items-center w-[280px] max-w-full"
-              style={{ height: 'calc(100% - 68px)' }}
-            >
-              {/* Profile Picture */}
-              <div className="w-24 h-24 mb-4 relative">
-                <Image
-                  src="/profile-pic.png"
-                  alt="Profile Picture"
-                  fill
-                  className="rounded-full object-cover border-4 border-primary dark:border-accent"
-                />
-              </div>
-
-              {/* Name and Username */}
-              <h2 className="text-2xl font-semibold mb-1 text-center">John Doe</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">@johndoe</p>
-
-              {/* Info Sections */}
-              <div className="flex flex-col gap-3 w-full">
-                <p className="text-sm"><span className="font-semibold">Bio:</span> Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-                <p className="text-sm"><span className="font-semibold">Address:</span> 123 Main St, City</p>
-                <p className="text-sm"><span className="font-semibold">Contact:</span> john@example.com</p>
-                <p className="text-sm"><span className="font-semibold">Website:</span> www.example.com</p>
-              </div>
-
-              {/* Optional Footer / Extra Info */}
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-4 text-center">
-                Additional info can go here.
-              </p>
-            </div>
-          )}
-
-
-          {/* Notifications Box */}
-          {showNotifications && (
-            <div
-              className="absolute top-0 left-0 bg-primary-dark dark:bg-accent-dark rounded shadow p-4 overflow-y-auto flex flex-col"
-              style={{ width: 'calc(85% - 2px)', height: 'calc(100% - 68px)' }}
-            >
-              <h2 className="text-xl font-bold mb-2 text-white">Notifications</h2>
-              <div className="flex flex-col gap-2">
-                {notifications.map((n, i) => (
-                  <p key={i} className="text-black dark:text-white bg-accent dark:bg-bg-dark p-2 rounded">{n}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Messages Box */}
-          {showMessages && (
-            <div
-              className="absolute top-0 left-0 bg-primary-dark dark:bg-accent-dark rounded shadow p-4 overflow-y-auto flex flex-col"
-              style={{ width: 'calc(85% - 2px)', height: 'calc(100% - 68px)' }}
-            >
-              <h2 className="text-xl font-bold mb-2 text-white">Messages</h2>
-              <div className="flex flex-col gap-2">
-                {messages.map((m, i) => (
-                  <p key={i} className="text-black dark:text-white bg-accent dark:bg-bg-dark p-2 rounded">{m}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Followers Box */}
-          {showFollowers && (
-            <div
-              className="absolute top-0 left-0 bg-primary-dark dark:bg-accent-dark rounded shadow p-4 overflow-y-auto flex flex-col"
-              style={{ width: 'calc(85% - 2px)', height: 'calc(100% - 68px)' }}
-            >
-              <h2 className="text-xl font-bold mb-2 text-white">Followers</h2>
-              <div className="flex flex-col gap-2">
-                {followers.map((f, i) => (
-                  <p key={i} className="text-black dark:text-white bg-accent dark:bg-bg-dark p-2 rounded">{f}</p>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Bottom 4 Buttons */}
-          <div className="absolute bottom-4 left-0 right-0 flex justify-between px-4">
-            <button onClick={() => { setShowFollowers(!showFollowers); setShowMessages(false); setShowNotifications(false); setShowProfileDetails(false); }}>
-              <Image src="/icons/followers.png" alt="Followers" width={32} height={32} />
-            </button>
-
-            <button onClick={() => { setShowMessages(!showMessages); setShowFollowers(false); setShowNotifications(false); setShowProfileDetails(false); }}>
-              <Image src="/icons/message.png" alt="Messages" width={32} height={32} />
-            </button>
-
-            <button onClick={() => { setShowNotifications(!showNotifications); setShowFollowers(false); setShowMessages(false); setShowProfileDetails(false); }}>
-              <Image src="/icons/notification.png" alt="Notifications" width={32} height={32} />
-            </button>
-
-            <button onClick={() => { setShowProfileDetails(!showProfileDetails); setShowFollowers(false); setShowMessages(false); setShowNotifications(false); }}>
-              <Image src="/icons/profile.png" alt="Profile" width={32} height={32} />
-            </button>
+        {/* Left: Newsfeed */}
+        <div className="w-3/4 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg h-full flex flex-col">
+          {/* Fixed buttons */}
+          <div className="flex gap-2 mb-4 sticky top-0 bg-gray-50 dark:bg-gray-900 z-10 p-2 rounded">
+            <AllPostsButton activeTab={activeTab} setActiveTab={setActiveTab} />
+            <MyPostsButton activeTab={activeTab} setActiveTab={setActiveTab} />
+            <CreatePostButton activeTab={activeTab} setActiveTab={setActiveTab} />
           </div>
 
-
+          {/* Scrollable newsfeed content */}
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === "all" && <AllPostsContent currentUser={currentUser} />}
+            {activeTab === "my" && <MyPostsContent currentUser={currentUser} />}
+            {activeTab === "create" && <CreatePostContent currentUser={currentUser} />}
+          </div>
 
         </div>
+
+        {/* Right: Sidebar */}
+        <Sidebar currentUser={currentUser} />
 
       </div>
     </main>
