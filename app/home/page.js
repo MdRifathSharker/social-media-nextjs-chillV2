@@ -7,13 +7,16 @@ import AllPostsButton from "@/components/buttons/AllPostsButton";
 import MyPostsButton from "@/components/buttons/MyPostsButton";
 import CreatePostButton from "@/components/buttons/CreatePostButton";
 import Sidebar from "@/components/sidebar/Sidebar";
-import SearchBar from "@/components/SearchBar";
+import SearchBarEnhanced from "@/components/SearchBarEnhanced";
 
 import AllPostsContent from "@/components/newsfeed/AllPostsContent";
 import MyPostsContent from "@/components/newsfeed/MyPostsContent";
 import CreatePostContent from "@/components/newsfeed/CreatePostContent";
 import CreatePostContentV2 from "@/components/newsfeed/CreatePostContent-v2";
 import MyPostsContentV2 from "@/components/newsfeed/MyPostsContent-v2";
+
+import SharedPostsButton from "@/components/buttons/SharedPostsButton";
+import SharedPostsContent from "@/components/newsfeed/SharedPostsContent";
 
 export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
@@ -84,7 +87,7 @@ export default function HomePage() {
 
         {/* Search Bar */}
         <div className="flex-1 flex justify-center">
-          <SearchBar onSearch={(query) => console.log("Search query:", query)} />
+          <SearchBarEnhanced />
         </div>
 
         {/* Logo */}
@@ -108,6 +111,7 @@ export default function HomePage() {
             <AllPostsButton activeTab={activeTab} setActiveTab={setActiveTab} />
             <MyPostsButton activeTab={activeTab} setActiveTab={setActiveTab} />
             <CreatePostButton activeTab={activeTab} setActiveTab={setActiveTab} />
+            <SharedPostsButton activeTab={activeTab} setActiveTab={setActiveTab} />
           </div>
 
           {/* Scrollable newsfeed content */}
@@ -115,6 +119,7 @@ export default function HomePage() {
             {activeTab === "all" && <AllPostsContent currentUser={currentUser} />}
             {activeTab === "my" && <MyPostsContentV2 currentUser={currentUser} />}
             {activeTab === "create" && <CreatePostContentV2 currentUser={currentUser} />}
+            {activeTab === "shared" && <SharedPostsContent currentUser={currentUser} />}
           </div>
 
         </div>

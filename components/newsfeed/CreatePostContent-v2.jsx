@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Post from "@/components/post";
-import { uploadPostImage, createPost } from "@/utils/posts";
+import FlexiblePost from "@/components/FlexiblePost";
+import { uploadPostImage, createPost, getUserProfile } from "@/utils/posts";
 
 export default function CreatePostContentV2({ currentUser }) {
   const [caption, setCaption] = useState("");
@@ -11,6 +11,8 @@ export default function CreatePostContentV2({ currentUser }) {
   const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [userProfile, setUserProfile] = useState(null);
+  const [fetchingProfile, setFetchingProfile] = useState(true);
 
   // Get current user from props or localStorage
   const user = currentUser || {
@@ -21,6 +23,29 @@ export default function CreatePostContentV2({ currentUser }) {
 
   // Check if user is authenticated
   const isAuthenticated = !!user.user_id;
+
+  // Fetch user profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!isAuthenticated) {
+        setFetchingProfile(false);
+        return;
+      }
+
+      try {
+        const result = await getUserProfile(user.user_id);
+        if (result.success) {
+          setUserProfile(result.user);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      } finally {
+        setFetchingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user.user_id, isAuthenticated]);
 
   // Handle file input and preview
   const handleImageUpload = (e) => {
@@ -41,8 +66,9 @@ export default function CreatePostContentV2({ currentUser }) {
       return;
     }
 
-    if (!caption.trim()) {
-      setMessage({ type: "error", text: "Caption cannot be empty!" });
+    // Either text or image is required
+    if (!caption.trim() && !imageFile) {
+      setMessage({ type: "error", text: "Please add either text or an image to your post!" });
       return;
     }
 
@@ -130,11 +156,11 @@ export default function CreatePostContentV2({ currentUser }) {
         {isAuthenticated && (
           <div className="flex items-center gap-3 text-sm opacity-70">
             <img
-              src={`https://i.pravatar.cc/40?u=${user.email || user.name}`}
+              src={userProfile?.profile_image || `https://i.pravatar.cc/40?u=${user.email || user.name}`}
               alt="avatar"
-              className="w-8 h-8 rounded-full"
+              className="w-8 h-8 rounded-full object-cover"
             />
-            <span>{user.name}</span>
+            <span>{userProfile?.name || user.name}</span>
           </div>
         )}
 
@@ -197,7 +223,7 @@ export default function CreatePostContentV2({ currentUser }) {
         <div className="flex gap-2">
           <button
             onClick={() => setShowPreview(!showPreview)}
-            disabled={!isAuthenticated || isLoading || !caption.trim()}
+            disabled={!isAuthenticated || isLoading || (!caption.trim() && !imageFile)}
             className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
           >
             {showPreview ? "Hide Preview" : "Preview Post"}
@@ -205,7 +231,7 @@ export default function CreatePostContentV2({ currentUser }) {
 
           <button
             onClick={handleSubmitPost}
-            disabled={!isAuthenticated || isLoading || !caption.trim()}
+            disabled={!isAuthenticated || isLoading || (!caption.trim() && !imageFile)}
             className="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition flex items-center gap-2"
           >
             {isLoading ? (
@@ -220,14 +246,17 @@ export default function CreatePostContentV2({ currentUser }) {
       </div>
 
       {/* Preview Section */}
-      {showPreview && caption.trim() && (
+      {showPreview && (caption.trim() || imageFile) && (
         <div>
           <h3 className="font-semibold mb-2">Post Preview:</h3>
-          <Post
-            name={user.name}
-            username={user.email?.split("@")[0] || "@user"}
-            image={imagePreviewUrl || "https://via.placeholder.com/500x300?text=No+Image"}
-            caption={caption}
+          <FlexiblePost
+            name={userProfile?.name || user.name}
+            username={userProfile?.email?.split("@")[0] || user.email?.split("@")[0] || "@user"}
+            image={imagePreviewUrl || null}
+            caption={caption || null}
+            profileImage={userProfile?.profile_image}
+            postId={null}
+            currentUserId={user.user_id}
           />
         </div>
       )}

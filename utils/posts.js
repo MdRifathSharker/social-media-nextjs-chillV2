@@ -61,8 +61,9 @@ export const createPost = async ({ userId, content, imageUrl }) => {
       return { error: 'User not authenticated' };
     }
 
-    if (!content || !content.trim()) {
-      return { error: 'Post content cannot be empty' };
+    // Allow either content or image (or both), but not neither
+    if ((!content || !content.trim()) && !imageUrl) {
+      return { error: 'Please add either text or an image to your post!' };
     }
 
     console.log('Creating post for userId:', userId);
@@ -92,7 +93,7 @@ export const createPost = async ({ userId, content, imageUrl }) => {
       .insert([
         {
           user_id: userId,
-          content: content.trim(),
+          content: content?.trim() || '',
           image_url: imageUrl || null,
           likes: 0,
           comments: 0
@@ -152,7 +153,7 @@ export const getUserPosts = async (userId) => {
 
     const { data, error } = await supabase
       .from('posts')
-      .select('*, users(name, username, user_id)')
+      .select('*, users(name, username, user_id, profile_image)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
@@ -166,5 +167,316 @@ export const getUserPosts = async (userId) => {
   } catch (error) {
     console.error('Get user posts error:', error);
     return { error: error.message || 'Failed to fetch posts' };
+  }
+};
+
+/**
+ * Delete a post by ID
+ * @param {string} postId - Post ID to delete
+ * @param {string} userId - Current user ID (for verification)
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export const deletePost = async (postId, userId) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post ID or user ID' };
+    }
+
+    console.log('Deleting post:', postId);
+
+    // First verify this post belongs to the current user
+    const { data: post, error: fetchError } = await supabase
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    if (fetchError) {
+      console.error('Fetch post error:', fetchError);
+      return { error: 'Post not found' };
+    }
+
+    if (post.user_id !== userId) {
+      return { error: 'You can only delete your own posts' };
+    }
+
+    // Delete the post
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      console.error('Delete post error:', error);
+      return { error: 'Failed to delete post: ' + error.message };
+    }
+
+    console.log('Post deleted successfully');
+    return { success: true };
+
+  } catch (error) {
+    console.error('Delete post error:', error);
+    return { error: error.message || 'Failed to delete post' };
+  }
+};
+
+/**
+ * Get current user profile with profile_image
+ * @param {string} userId - User ID
+ * @returns {Promise<{success: boolean, user?: object, error?: string}>}
+ */
+export const getUserProfile = async (userId) => {
+  try {
+    if (!userId) {
+      return { error: 'User not authenticated' };
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('user_id, name, email, profile_image')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      console.error('Fetch user profile error:', error);
+      return { error: 'Failed to fetch user profile' };
+    }
+
+    return { success: true, user: data };
+
+  } catch (error) {
+    console.error('Get user profile error:', error);
+    return { error: error.message || 'Failed to fetch user profile' };
+  }
+};
+
+/**
+ * Toggle like on a post (add if not liked, remove if liked)
+ * @param {string} postId - Post ID
+ * @param {string} userId - Current user ID
+ * @returns {Promise<{success: boolean, liked?: boolean, error?: string}>}
+ */
+export const toggleLike = async (postId, userId) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post or user ID' };
+    }
+
+    // Check if user already liked this post
+    const { data: existingLike, error: checkError } = await supabase
+      .from('likes')
+      .select('like_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingLike) {
+      // User already liked, so unlike it
+      const { error } = await supabase
+        .from('likes')
+        .delete()
+        .eq('like_id', existingLike.like_id);
+
+      if (error) {
+        console.error('Unlike error:', error);
+        return { error: 'Failed to unlike post' };
+      }
+
+      return { success: true, liked: false };
+    }
+
+    // User hasn't liked, so add like
+    const { error } = await supabase
+      .from('likes')
+      .insert([{ post_id: postId, user_id: userId }]);
+
+    if (error) {
+      console.error('Like error:', error);
+      return { error: 'Failed to like post' };
+    }
+
+    return { success: true, liked: true };
+
+  } catch (error) {
+    console.error('Toggle like error:', error);
+    return { error: error.message || 'Failed to toggle like' };
+  }
+};
+
+/**
+ * Get like count for a post
+ * @param {string} postId - Post ID
+ * @returns {Promise<{success: boolean, count?: number, error?: string}>}
+ */
+export const getLikeCount = async (postId) => {
+  try {
+    if (!postId) {
+      return { error: 'Missing post ID' };
+    }
+
+    const { count, error } = await supabase
+      .from('likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+
+    if (error) {
+      console.error('Get like count error:', error);
+      return { error: 'Failed to fetch like count' };
+    }
+
+    return { success: true, count: count || 0 };
+
+  } catch (error) {
+    console.error('Like count error:', error);
+    return { error: error.message || 'Failed to get like count' };
+  }
+};
+
+/**
+ * Check if current user liked a post
+ * @param {string} postId - Post ID
+ * @param {string} userId - Current user ID
+ * @returns {Promise<{success: boolean, liked?: boolean, error?: string}>}
+ */
+export const isPostLikedByUser = async (postId, userId) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post or user ID' };
+    }
+
+    const { data, error } = await supabase
+      .from('likes')
+      .select('like_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Check like error:', error);
+      return { error: 'Failed to check like status' };
+    }
+
+    return { success: true, liked: !!data };
+
+  } catch (error) {
+    console.error('Is liked error:', error);
+    return { error: error.message || 'Failed to check like' };
+  }
+};
+
+/**
+ * Add a comment to a post
+ * @param {string} postId - Post ID
+ * @param {string} userId - Current user ID
+ * @param {string} commentText - Comment text
+ * @returns {Promise<{success: boolean, comment?: object, error?: string}>}
+ */
+export const addComment = async (postId, userId, commentText) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post or user ID' };
+    }
+
+    if (!commentText || !commentText.trim()) {
+      return { error: 'Comment cannot be empty' };
+    }
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert([
+        {
+          post_id: postId,
+          user_id: userId,
+          comment_text: commentText.trim()
+        }
+      ])
+      .select('*, users(name, email, profile_image)')
+      .single();
+
+    if (error) {
+      console.error('Add comment error:', error);
+      return { error: 'Failed to add comment' };
+    }
+
+    return { success: true, comment: data };
+
+  } catch (error) {
+    console.error('Add comment error:', error);
+    return { error: error.message || 'Failed to add comment' };
+  }
+};
+
+/**
+ * Get all comments for a post
+ * @param {string} postId - Post ID
+ * @returns {Promise<{success: boolean, comments?: array, error?: string}>}
+ */
+export const getComments = async (postId) => {
+  try {
+    if (!postId) {
+      return { error: 'Missing post ID' };
+    }
+
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*, users(name, email, profile_image)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Get comments error:', error);
+      return { error: 'Failed to fetch comments' };
+    }
+
+    return { success: true, comments: data || [] };
+
+  } catch (error) {
+    console.error('Get comments error:', error);
+    return { error: error.message || 'Failed to fetch comments' };
+  }
+};
+
+/**
+ * Delete a comment
+ * @param {string} commentId - Comment ID
+ * @param {string} userId - Current user ID (for verification)
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export const deleteComment = async (commentId, userId) => {
+  try {
+    if (!commentId || !userId) {
+      return { error: 'Missing comment or user ID' };
+    }
+
+    // Verify comment belongs to user
+    const { data: comment, error: fetchError } = await supabase
+      .from('comments')
+      .select('user_id')
+      .eq('comment_id', commentId)
+      .single();
+
+    if (fetchError) {
+      return { error: 'Comment not found' };
+    }
+
+    if (comment.user_id !== userId) {
+      return { error: 'You can only delete your own comments' };
+    }
+
+    const { error } = await supabase
+      .from('comments')
+      .delete()
+      .eq('comment_id', commentId);
+
+    if (error) {
+      console.error('Delete comment error:', error);
+      return { error: 'Failed to delete comment' };
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    return { error: error.message || 'Failed to delete comment' };
   }
 };
