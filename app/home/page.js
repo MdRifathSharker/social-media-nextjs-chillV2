@@ -18,22 +18,53 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState("all"); 
   const [currentUser, setCurrentUser] = useState(null);
 
+  // In HomePage component, update the useEffect:
   useEffect(() => {
-  if (typeof window !== "undefined") {
-    const userId = localStorage.getItem("userId");
-    const userName = localStorage.getItem("userName");
-    const userEmail = localStorage.getItem("userEmail");
-
-    if (userId && userEmail) {
-      setCurrentUser({
-        user_id: userId,
-        name: userName,
-        email: userEmail
+    if (typeof window !== "undefined") {
+      const userId = localStorage.getItem("userId");
+      const userName = localStorage.getItem("userName");
+      const userEmail = localStorage.getItem("userEmail");
+      
+      console.log("🔄 HomePage useEffect - localStorage data:", {
+        userId,
+        userName,
+        userEmail
       });
-    }
-  }
-}, []);
 
+      if (userId && userEmail) {
+        // Try to get full user data from localStorage
+        const storedUser = localStorage.getItem('currentUser');
+        let userData;
+        
+        if (storedUser) {
+          try {
+            userData = JSON.parse(storedUser);
+          } catch (e) {
+            console.error("Error parsing stored user:", e);
+            userData = null;
+          }
+        }
+        
+        if (userData) {
+          // Use the complete user object
+          setCurrentUser(userData);
+          console.log("✅ CurrentUser set from localStorage:", userData);
+        } else {
+          // Create basic user object
+          setCurrentUser({
+            user_id: userId,
+            name: userName,
+            email: userEmail
+          });
+          console.log("✅ CurrentUser created from localStorage data");
+        }
+      } else {
+        console.log("⚠️ No user data in localStorage, redirecting to login");
+        // Redirect to login if no user data
+        window.location.href = "/";
+      }
+    }
+  }, []);
 
 
   return (

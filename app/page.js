@@ -670,6 +670,7 @@ export default function Home() {
   };
 
   // Login - FIXED VERSION
+  // Update handleSignIn function:
   const handleSignIn = async (e) => {
     e.preventDefault();
     if (!email || !password) {
@@ -682,43 +683,82 @@ export default function Home() {
     setSuccessMessage("");
 
     try {
-      const result = await loginUser(email, password);
+      console.log("Attempting login for:", email);
 
-      if (result.error) {
-        setErrorMessage(result.error);
-      } else {
-        setSuccessMessage("Login successful! Redirecting...");
+      // Get user from database directly (no Supabase auth needed)
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
 
-        // Store user data in localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userEmail', email);
-          localStorage.setItem('userName', result.user?.name || "");
-          localStorage.setItem('userId', result.user?.user_id || "");
-          localStorage.setItem('username', result.user?.username || "");
-
-          // Store minimal session data to avoid refresh token issues
-          const sessionData = {
-            isLoggedIn: true,
-            userEmail: email,
-            userName: result.user?.name || "",
-            timestamp: Date.now()
-          };
-          localStorage.setItem('session', JSON.stringify(sessionData));
-        }
-
-        setTimeout(() => {
-          router.push('/home');
-        }, 1500);
+      if (error) {
+        console.error("Database error during login:", error);
+        return { error: "Database error. Please try again." };
       }
+
+      if (!user) {
+        console.log("User not found:", email);
+        return { error: "Invalid email or password" };
+      }
+
+      if (!user.password) {
+        console.log("Password not set for user:", email);
+        return { error: "Account setup incomplete. Please contact support." };
+      }
+
+      // Verify password
+      console.log("Verifying password...");
+      const isValid = await comparePassword(password, user.password);
+
+      if (!isValid) {
+        console.log("Invalid password for:", email);
+        return { error: "Invalid email or password" };
+      }
+
+      console.log("✅ Login successful for:", email);
+
+      // Store user data in localStorage
+      if (typeof window !== 'undefined') {
+        // Clear old data
+        localStorage.clear();
+        
+        // Store user data
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userEmail', user.email);
+        localStorage.setItem('userName', user.name || "");
+        localStorage.setItem('userId', user.user_id);
+        localStorage.setItem('username', user.username || "");
+        
+        // Store complete user object (for profile section)
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        
+        console.log("📝 User data stored in localStorage:", {
+          userId: user.user_id,
+          name: user.name,
+          email: user.email
+        });
+      }
+
+      setSuccessMessage("Login successful! Redirecting...");
+
+      // Redirect immediately
+      setTimeout(() => {
+        window.location.href = '/home';
+      }, 1000);
+
+      return {
+        success: true,
+        user: user
+      };
+
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage("Login failed. Please check your credentials.");
+      return { error: "Login failed: " + error.message };
     } finally {
       setLoading(false);
     }
   };
-
   // Reset Form
   const resetForm = () => {
     setIsVerifying(false);
