@@ -210,7 +210,7 @@ export default function ExperienceSection({ currentUser }) {
         </button>
       </div>
 
-      {/* Debug info */}
+      {/* Debug info
       <div className="text-xs text-gray-500 mb-2">
         User ID: {getUserId() ? `${getUserId().substring(0, 8)}...` : "Not found"}
       </div>
@@ -236,7 +236,7 @@ export default function ExperienceSection({ currentUser }) {
             Add Your First Experience
           </button>
         </div>
-      )}
+      )} */}
 
       {!loading && experience.length > 0 && (
         <div className="flex flex-col gap-3 max-h-60 overflow-y-auto pr-2">
