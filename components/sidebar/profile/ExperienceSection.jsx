@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import ExperienceItem from "@/components/sidebar/lists/ExperienceItem";
-import ExperienceModal from "./ExperienceModal";  // ✅ Same folder, so use ./
+import ExperienceModal from "./ExperienceModal";
 import { experienceService  } from "@/utils/experienceService";
 
 // components/sidebar/profile/ExperienceSection.jsx
