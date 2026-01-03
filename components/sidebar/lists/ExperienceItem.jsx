@@ -1,3 +1,4 @@
+//components/sidebar/lists/ExperienceItem.jsx
 "use client";
 
 export default function ExperienceItem({
@@ -35,7 +36,7 @@ export default function ExperienceItem({
           {/* Expand */}
           <button
             onClick={() => setExpandedExp(isExpanded ? null : index)}
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-primary/10 transition"
+            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-primary/10 dark:hover:bg-accent/20 transition"
             title="View details"
           >
             <svg
@@ -54,7 +55,7 @@ export default function ExperienceItem({
           {/* Edit */}
           <button
             onClick={() => onEdit(index)}
-            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-primary/10 transition"
+            className="p-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-primary/10 dark:hover:bg-accent/20 transition"
             title="Edit"
           >
             <svg
@@ -75,7 +76,7 @@ export default function ExperienceItem({
           {/* Delete */}
           <button
             onClick={() => onDelete(index)}
-            className="p-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition"
+            className="p-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-800/50 transition"
             title="Delete"
           >
             <svg
@@ -99,21 +100,27 @@ export default function ExperienceItem({
       {isExpanded && (
         <div className="mt-2 text-xs text-gray-600 dark:text-gray-400">
           <p className="font-semibold">
-            {exp.location} • {exp.employmentType}
+            {exp.location && exp.location}
+            {exp.location && exp.employmentType && " • "}
+            {exp.employmentType}
           </p>
 
-          <p className="mt-2">{exp.description}</p>
+          {exp.description && (
+            <p className="mt-2 whitespace-pre-line">{exp.description}</p>
+          )}
 
-          <div className="flex gap-1 mt-2 flex-wrap">
-            {exp.skills.map((skill, i) => (
-              <span
-                key={i}
-                className="text-xs bg-primary dark:bg-accent text-white px-2 py-1 rounded-full"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
+          {exp.skills && exp.skills.length > 0 && (
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {exp.skills.map((skill, i) => (
+                <span
+                  key={i}
+                  className="text-xs bg-primary dark:bg-accent text-white px-2 py-1 rounded-full"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

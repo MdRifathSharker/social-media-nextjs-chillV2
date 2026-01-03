@@ -1,3 +1,4 @@
+---Jubayed--
 -- Users table -- 
 CREATE TABLE users (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -51,3 +52,245 @@ CREATE TABLE follows (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(follower_id, following_id) -- Prevents duplicate follows
 );
+
+
+
+--tamima--
+
+-- Create function to update profile image without RLS
+CREATE OR REPLACE FUNCTION update_profile_image(p_user_id uuid, p_image_url text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER -- This bypasses RLS
+AS $$
+BEGIN
+  UPDATE users 
+  SET profile_image = p_image_url, 
+      updated_at = NOW()
+  WHERE user_id = p_user_id;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'User not found: %', p_user_id;
+  END IF;
+END;
+$$;
+
+
+-- Check current storage policies
+SELECT * FROM storage.objects LIMIT 1;
+
+-- Drop all policies for avatars bucket
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
+
+-- Create simple policy: Anyone can do anything
+CREATE POLICY "Allow all operations on avatars" 
+ON storage.objects 
+FOR ALL 
+USING (bucket_id = 'avatars') 
+WITH CHECK (bucket_id = 'avatars');
+
+
+-- Enable RLS on storage (if not already)
+-- Then add these policies:
+
+-- 1. Anyone can view (SELECT) avatars
+CREATE POLICY "Public can view avatars" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'avatars');
+
+-- 2. Anyone can insert (upload) avatars
+CREATE POLICY "Public can upload avatars" 
+ON storage.objects FOR INSERT 
+WITH CHECK (bucket_id = 'avatars');
+
+-- 3. Anyone can update avatars  
+CREATE POLICY "Public can update avatars" 
+ON storage.objects FOR UPDATE 
+USING (bucket_id = 'avatars') 
+WITH CHECK (bucket_id = 'avatars');
+
+-- 4. Anyone can delete avatars
+CREATE POLICY "Public can delete avatars" 
+ON storage.objects FOR DELETE 
+USING (bucket_id = 'avatars');
+
+-- ============================================
+-- COMPLETE RLS FIX SCRIPT
+-- ============================================
+
+-- 1. DISABLE RLS FOR ALL TABLES
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE experiences DISABLE ROW LEVEL SECURITY;
+ALTER TABLE posts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE comments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE likes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE follows DISABLE ROW LEVEL SECURITY;
+
+-- 2. FIX STORAGE POLICIES
+-- Delete existing policies
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
+
+-- Create simple policy for avatars bucket
+CREATE POLICY "Allow all on avatars" 
+ON storage.objects 
+FOR ALL 
+USING (bucket_id = 'avatars') 
+WITH CHECK (bucket_id = 'avatars');
+
+-- 3. CREATE BYPASS FUNCTION FOR USERS TABLE
+CREATE OR REPLACE FUNCTION update_user_profile(p_user_id uuid, p_name text DEFAULT NULL, p_bio text DEFAULT NULL, p_website text DEFAULT NULL, p_location text DEFAULT NULL, p_image_url text DEFAULT NULL)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE users 
+  SET 
+    name = COALESCE(p_name, name),
+    bio = COALESCE(p_bio, bio),
+    website = COALESCE(p_website, website),
+    location = COALESCE(p_location, location),
+    profile_image = COALESCE(p_image_url, profile_image),
+    updated_at = NOW()
+  WHERE user_id = p_user_id;
+END;
+$$;
+
+-- 4. VERIFY EVERYTHING IS WORKING
+DO $$
+DECLARE
+  user_count integer;
+  exp_count integer;
+BEGIN
+  -- Check tables
+  SELECT COUNT(*) INTO user_count FROM users;
+  SELECT COUNT(*) INTO exp_count FROM experiences;
+  
+  RAISE NOTICE 'Users: %, Experiences: %', user_count, exp_count;
+  
+  -- Check storage
+  RAISE NOTICE 'Storage bucket avatars exists';
+END $$;
+
+-- Check current foreign key
+SELECT 
+    tc.table_name, 
+    kcu.column_name, 
+    ccu.table_name AS foreign_table_name,
+    ccu.column_name AS foreign_column_name 
+FROM 
+    information_schema.table_constraints AS tc 
+    JOIN information_schema.key_column_usage AS kcu
+      ON tc.constraint_name = kcu.constraint_name
+    JOIN information_schema.constraint_column_usage AS ccu
+      ON ccu.constraint_name = tc.constraint_name
+WHERE 
+    tc.constraint_type = 'FOREIGN KEY' 
+    AND tc.table_name = 'experiences';
+
+
+-- Drop and recreate experiences table
+DROP TABLE IF EXISTS experiences CASCADE;
+
+CREATE TABLE experiences (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  company text NOT NULL,
+  employment_type text CHECK (employment_type IN ('Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance')),
+  start_date date NOT NULL,
+  end_date date,
+  currently_working boolean DEFAULT false,
+  location text,
+  description text,
+  skills text[] DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  
+  -- Foreign key to users table (NOT auth.users)
+  CONSTRAINT experiences_user_id_fkey 
+    FOREIGN KEY (user_id) 
+    REFERENCES users(user_id) 
+    ON DELETE CASCADE
+);
+
+-- Enable RLS if needed, but add policies
+ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
+
+-- Simple policy: allow all operations
+CREATE POLICY "Allow all operations on experiences" 
+ON experiences 
+FOR ALL 
+USING (true) 
+WITH CHECK (true);
+
+-- Make sure users table doesn't reference auth.users
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE users (
+  user_id uuid PRIMARY KEY,
+  name text NOT NULL,
+  username text UNIQUE NOT NULL,
+  email text UNIQUE NOT NULL,
+  contact text,
+  password text,
+  profile_image text,
+  bio text,
+  followers_count integer DEFAULT 0,
+  following_count integer DEFAULT 0,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  headline text,
+  cover_image text,
+  website text,
+  location text
+);
+
+-- Disable RLS or add policies
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all operations on users" 
+ON users 
+FOR ALL 
+USING (true) 
+WITH CHECK (true);
+
+-- 1. First disable/remove foreign key constraint
+ALTER TABLE experiences DROP CONSTRAINT IF EXISTS experiences_user_id_fkey;
+
+-- 2. Make sure user_id columns match type
+ALTER TABLE users ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
+ALTER TABLE experiences ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
+
+-- 3. Add correct foreign key
+ALTER TABLE experiences 
+ADD CONSTRAINT experiences_user_id_fkey 
+FOREIGN KEY (user_id) 
+REFERENCES users(user_id) 
+ON DELETE CASCADE;
+
+-- 4. Disable RLS for testing
+ALTER TABLE experiences DISABLE ROW LEVEL SECURITY;
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+
+-- 5. Check everything
+SELECT 
+    'users' as table_name,
+    COUNT(*) as row_count
+FROM users
+UNION ALL
+SELECT 
+    'experiences' as table_name,
+    COUNT(*) as row_count
+FROM experiences;
+
+-- 6. Test insert
+INSERT INTO experiences (user_id, title, company, start_date, location)
+VALUES (
+    (SELECT user_id FROM users LIMIT 1), -- Get any existing user
+    'Test Experience',
+    'Test Company',
+    '2023-01-01',
+    'Test Location'
+) RETURNING *;
