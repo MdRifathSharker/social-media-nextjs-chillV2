@@ -3,7 +3,7 @@
 
 import OtherExperienceItem from "./OtherExperienceItem";
 
-export default function ExperienceSectionOthers({ experience }) {
+export default function OtherExperienceSection({ experience }) {
   return (
     <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
