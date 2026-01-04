@@ -3,6 +3,7 @@
 export default function ProfileInfo({ profileData }) {
   return (
     <div className="flex flex-col gap-3 w-full text-sm mb-4">
+      <InfoRow label="Contact" value={profileData.contact} />
       <InfoRow label="Email" value={profileData.email} />
       <InfoRow label="Website" value={profileData.website} />
       <InfoRow label="Location" value={profileData.location} />

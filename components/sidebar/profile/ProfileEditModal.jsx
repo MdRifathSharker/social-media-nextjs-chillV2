@@ -6,6 +6,7 @@ export default function ProfileEditModal({ profileData, onSave, onClose }) {
   const [formData, setFormData] = useState({
     name: "",
     headline: "",
+    contact: "",
     email: "",
     website: "",
     location: ""
@@ -17,6 +18,7 @@ export default function ProfileEditModal({ profileData, onSave, onClose }) {
     setFormData({
       name: profileData.name || "",
       headline: profileData.headline || "",
+      contact: profileData.contact || "",
       email: profileData.email || "",
       website: profileData.website || "",
       location: profileData.location || ""
@@ -79,6 +81,18 @@ export default function ProfileEditModal({ profileData, onSave, onClose }) {
               onChange={handleChange}
               className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
               placeholder="e.g., Frontend Developer"
+            />
+          </div>
+          
+           <div>
+            <label className="block text-sm font-medium mb-1">Contact</label>
+            <input
+              type="number"
+              name="contact"
+              value={formData.contact}
+              onChange={handleChange}
+              className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+              title="valid contact number"
             />
           </div>
           

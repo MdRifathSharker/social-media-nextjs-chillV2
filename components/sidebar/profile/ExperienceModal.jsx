@@ -207,6 +207,9 @@ export default function ExperienceModal({
                 <option value="Contract">Contract</option>
                 <option value="Internship">Internship</option>
                 <option value="Freelance">Freelance</option>
+                <option value="Temporary">Temporary</option>
+                <option value="Volunteer">Volunteer</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 

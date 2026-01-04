@@ -13,7 +13,7 @@ export default function Sidebar({ currentUser }) {
   const renderContent = () => {
     switch (activeTab) {
       case "following":
-        return <FollowingSection />;
+        return <FollowingSection currentUser={currentUser} />;
 
       case "message":
         return <MessageSection />;
