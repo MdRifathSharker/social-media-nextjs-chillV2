@@ -1,5 +1,5 @@
 // // components/othersprofile/OtherProfileInfo.jsx
-// "use client";
+ "use client";
 
 // export default function OtherProfileInfo({ profileData }) {
 //   return (
@@ -43,7 +43,7 @@
 //   );
 // }
 
-export default function OtherProfileInfo({ profileData }) {
+export default function OthersProfileInfo({ profileData }) {
   return (
     <div className="flex flex-col gap-3 w-full text-sm mb-4">
       <InfoRow label="Contact" value={profileData.contact} />

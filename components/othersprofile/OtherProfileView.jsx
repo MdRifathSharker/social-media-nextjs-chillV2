@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeft, User } from "lucide-react";
-import OtherProfileInfo from "./OtherProfileInfo";
+import OthersProfileInfo from "./OthersProfileInfo";
 import ProfileHeader from "./ProfileHeader";
 import OtherExperienceSection from "./OtherExperienceSection";
 
@@ -102,7 +102,7 @@ export default function OtherProfileView({ user, onBack }) {
                     Personal Information
                   </h3>
                 </div>
-                <OtherProfileInfo profileData={user} />
+                <OthersProfileInfo profileData={user} />
               </div>
             </div>
 
