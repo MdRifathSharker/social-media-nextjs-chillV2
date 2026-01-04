@@ -85,6 +85,7 @@ export default function ProfileSection({ currentUser }) {
         setProfileData({
           name: data.name || "User",
           headline: data.bio || "Frontend Developer",
+          contact: data.contact || "",
           email: data.email || "",
           website: data.website || "",
           location: data.location || "",
@@ -187,6 +188,7 @@ export default function ProfileSection({ currentUser }) {
       const { data, error } = await updateUserProfile(userId, {
         name: updatedData.name,
         bio: updatedData.headline,
+        contact: updatedData.contact,
         website: updatedData.website,
         location: updatedData.location
       });
@@ -277,6 +279,7 @@ export default function ProfileSection({ currentUser }) {
       {/* Profile Info */}
       <ProfileInfo
         profileData={{
+          contact: profileData.contact,
           email: profileData.email,
           website: profileData.website,
           location: profileData.location

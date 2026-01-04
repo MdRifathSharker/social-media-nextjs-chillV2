@@ -6,6 +6,7 @@ export default function FollowingSection() {
       <FollowingItem
         name="Alice Johnson"
         avatar="https://i.pravatar.cc/100?u=alice"
+        headline="Frontend Developer"
       />
     </div>
   );
