@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeft, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import OtherProfileInfo from "./OtherProfileInfo";
 import ProfileHeader from "./ProfileHeader";
 import OtherExperienceSection from "./OtherExperienceSection";
+//import ExperienceSection from "../sidebar/profile/ExperienceSection";
 
-export default function OtherProfileView({ user }) {
+
+export default function OtherProfileView({ user, onBack }) {
   const [experience, setExperience] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter(); // Router hook add করা হয়েছে
 
   useEffect(() => {
     if (!user) return;
@@ -33,31 +33,17 @@ export default function OtherProfileView({ user }) {
     fetchExperience();
   }, [user]);
 
-  // Back button handler function
-  const handleBack = () => {
-    // Option 1: হোম পেজে ফিরে যান
-    //router.push("/");
-    
-    // Option 2: এক ধাপ পিছনে যান (ব্রাউজার ব্যাকের মতো)
-     router.back();
-    
-    // Option 3: Users লিস্টে ফিরে যান
-    // router.push("/users");
-    
-    // Option 4: Replace method ব্যবহার করুন (হিস্ট্রিতে current পেজ রাখবে না)
-    // router.replace("/");
-  };
-
   if (!user) return null;
 
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl flex flex-col overflow-hidden shadow-lg">
+
       {/* Top Header with Back Button and Small Profile */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/5 to-accent/5">
         <div className="flex items-center justify-between">
-          {/* Back Button - এখন সম্পূর্ণ ফাংশনাল */}
+          {/* Back Button */}
           <button 
-            onClick={handleBack} // onBack থেকে handleBack এ পরিবর্তন
+            onClick={onBack}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
                      transition-colors group"
           >

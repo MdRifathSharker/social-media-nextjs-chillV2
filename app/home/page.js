@@ -20,6 +20,7 @@ import MyPostsContentV2 from "@/components/newsfeed/MyPostsContent-v2";
 
 import SharedPostsButton from "@/components/buttons/SharedPostsButton";
 import SharedPostsContent from "@/components/newsfeed/SharedPostsContent";
+//import OtherProfileView from "@/components/othersprofile/OtherProfileView";
 
 export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
