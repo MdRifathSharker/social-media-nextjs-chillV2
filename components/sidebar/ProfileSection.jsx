@@ -9,7 +9,6 @@ import ExperienceSection from "./profile/ExperienceSection"; // Use no-auth vers
 import LogoutSection from "./profile/LogoutSection";
 import ProfileEditModal from "./profile/ProfileEditModal";
 
-// components/sidebar/ProfileSection.jsx
 // components/sidebar/profile/ProfileSection.jsx
 
 import { fetchUserProfile, updateUserProfile } from "@/utils/profileService";
