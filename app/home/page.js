@@ -113,7 +113,8 @@ export default function HomePage() {
         {/* Left: Newsfeed or Selected Profile */}
 <div className="w-3/4 p-4 rounded-lg h-full flex flex-col">
   {selectedProfile ? (
-  <OtherProfileView user={selectedProfile} />
+  <OtherProfileView user={selectedProfile}
+  onBack={() => setSelectedProfile(null)} />
 ) : (
   // Normal posts tabs
   <div className="bg-gray-50 dark:bg-gray-900 rounded-lg h-full flex flex-col">
