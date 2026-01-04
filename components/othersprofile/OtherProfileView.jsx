@@ -7,7 +7,6 @@ import ProfileHeader from "./ProfileHeader";
 import OtherExperienceSection from "./OtherExperienceSection";
 //import ExperienceSection from "../sidebar/profile/ExperienceSection";
 
-
 export default function OtherProfileView({ user, onBack }) {
   const [experience, setExperience] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
