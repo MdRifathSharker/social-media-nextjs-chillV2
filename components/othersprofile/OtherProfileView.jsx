@@ -5,7 +5,6 @@ import { ArrowLeft, User } from "lucide-react";
 import OtherProfileInfo from "./OtherProfileInfo";
 import ProfileHeader from "./ProfileHeader";
 import OtherExperienceSection from "./OtherExperienceSection";
-//import ExperienceSection from "../sidebar/profile/ExperienceSection";
 
 export default function OtherProfileView({ user, onBack }) {
   const [experience, setExperience] = useState([]);
@@ -34,15 +33,21 @@ export default function OtherProfileView({ user, onBack }) {
 
   if (!user) return null;
 
+  const handleBackClick = () => {
+    if (onBack) {
+      onBack(); // Call the parent's onBack function
+    }
+  };
+
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl flex flex-col overflow-hidden shadow-lg">
 
       {/* Top Header with Back Button and Small Profile */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/5 to-accent/5">
         <div className="flex items-center justify-between">
-          {/* Back Button */}
+          {/* Back Button - Fixed onClick handler */}
           <button 
-            onClick={onBack}
+            onClick={handleBackClick}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
                      transition-colors group"
           >
