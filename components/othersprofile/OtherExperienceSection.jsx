@@ -1,9 +1,16 @@
-// components/othersprofile/ExperienceSectionOthers.jsx
+// components/othersprofile/OtherExperienceSection.jsx
 "use client";
 
+import { useState } from "react";
 import OtherExperienceItem from "./OtherExperienceItem";
 
 export default function OtherExperienceSection({ experience }) {
+  const [expandedId, setExpandedId] = useState(null);
+
+  const toggleExpand = (id) => {
+    setExpandedId(expandedId === id ? null : id);
+  };
+
   return (
     <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 h-full flex flex-col">
       <div className="flex justify-between items-center mb-6">
@@ -18,8 +25,8 @@ export default function OtherExperienceSection({ experience }) {
         )}
       </div>
 
-      {/* Scrollable Experiences List */}
-      <div className="flex-1 overflow-y-auto pr-2">
+      {/* Scrollable Experiences List - শুধুমাত্র ২+ Experience থাকলে স্ক্রল হবে */}
+      <div className={`flex-1 ${experience.length >= 2 ? 'overflow-y-auto pr-2' : ''}`}>
         {experience.length === 0 ? (
           <div className="text-center py-8">
             <div className="inline-block p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
@@ -33,7 +40,12 @@ export default function OtherExperienceSection({ experience }) {
         ) : (
           <div className="space-y-4">
             {experience.map((exp, index) => (
-              <OtherExperienceItem key={exp.id || index} exp={exp} />
+              <OtherExperienceItem 
+                key={exp.id || index} 
+                exp={exp} 
+                isExpanded={expandedId === (exp.id || index)}
+                onToggle={() => toggleExpand(exp.id || index)}
+              />
             ))}
           </div>
         )}

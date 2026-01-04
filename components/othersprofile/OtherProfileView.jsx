@@ -1,3 +1,4 @@
+// components/othersprofile/OtherProfileView.jsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,51 +6,111 @@ import { ArrowLeft, User } from "lucide-react";
 import OthersProfileInfo from "./OthersProfileInfo";
 import ProfileHeader from "./ProfileHeader";
 import OtherExperienceSection from "./OtherExperienceSection";
+import { getCompleteOtherUserData } from "@/utils/otherProfileService";
 
-export default function OtherProfileView({ user, onBack }) {
+export default function OtherProfileView({ user: initialUser, onBack }) {
+  const [user, setUser] = useState(initialUser);
   const [experience, setExperience] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   useEffect(() => {
-    if (!user) return;
+    // Get current user ID from localStorage
+    const userId = localStorage.getItem("userId");
+    setCurrentUserId(userId);
+  }, []);
 
-    const fetchExperience = async () => {
+  useEffect(() => {
+    if (!user?.user_id) return;
+
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(`/api/users/${user.user_id}/experience`);
-        const data = await res.json();
-        setExperience(Array.isArray(data) ? data : []);
+        
+        // ✅ CHANGED: Using new service to fetch all data at once
+        const result = await getCompleteOtherUserData(user.user_id, currentUserId);
+        
+        if (result.success) {
+          setUser(prev => ({ ...prev, ...result.user }));
+          setExperience(result.experiences || []);
+          setIsFollowing(result.isFollowing);
+          
+          // ✅ NEW: Update localStorage with latest data
+          localStorage.setItem(`user_${user.user_id}`, JSON.stringify(result.user));
+        } else {
+          console.error("Failed to fetch user data:", result.error);
+          setExperience([]);
+        }
       } catch (err) {
-        console.error("Error fetching experiences:", err);
+        console.error("Error fetching user data:", err);
         setExperience([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchExperience();
-  }, [user]);
+    fetchData();
+  }, [user?.user_id, currentUserId]);
 
   if (!user) return null;
 
   const handleBackClick = () => {
     if (onBack) {
-      onBack(); // Call the parent's onBack function
+      onBack();
+    }
+  };
+
+  // ✅ NEW: Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (!currentUserId) {
+      alert("Please login to follow users");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      if (isFollowing) {
+        // Unfollow user
+        const { success } = await unfollowUser(currentUserId, user.user_id);
+        if (success) {
+          setIsFollowing(false);
+          setUser(prev => ({
+            ...prev,
+            followers_count: Math.max(0, (prev.followers_count || 1) - 1)
+          }));
+        }
+      } else {
+        // Follow user
+        const { success } = await followUser(currentUserId, user.user_id);
+        if (success) {
+          setIsFollowing(true);
+          setUser(prev => ({
+            ...prev,
+            followers_count: (prev.followers_count || 0) + 1
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      alert("Failed to update follow status");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="w-full h-full bg-white dark:bg-gray-800 rounded-xl flex flex-col overflow-hidden shadow-lg">
-
       {/* Top Header with Back Button and Small Profile */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-primary/5 to-accent/5">
         <div className="flex items-center justify-between">
-          {/* Back Button - Fixed onClick handler */}
+          {/* Back Button */}
           <button 
             onClick={handleBackClick}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 
                      transition-colors group"
+            disabled={isLoading}
           >
             <ArrowLeft className="w-5 h-5 text-primary dark:text-accent group-hover:scale-110 transition-transform" />
             <span className="text-sm font-semibold text-primary dark:text-accent">Back to Home</span>
@@ -84,7 +145,8 @@ export default function OtherProfileView({ user, onBack }) {
             <ProfileHeader 
               user={user} 
               isFollowing={isFollowing} 
-              setIsFollowing={setIsFollowing} 
+              onFollowToggle={handleFollowToggle} // ✅ CHANGED: Added handler
+              isLoading={isLoading}
             />
           </div>
 
@@ -125,3 +187,7 @@ export default function OtherProfileView({ user, onBack }) {
     </div>
   );
 }
+
+// ✅ NEW: Import follow functions
+import { followUser, unfollowUser } from "@/utils/followService";
+

@@ -1,8 +1,29 @@
+// components/othersprofile/ProfileHeader.jsx
 "use client";
 
 import { useState } from "react";
 
-export default function ProfileHeader({ user, isFollowing, setIsFollowing }) {
+export default function ProfileHeader({ user, isFollowing, onFollowToggle, isLoading }) {
+  
+  // ✅ NEW: Local state for optimistic UI updates
+  const [optimisticFollowing, setOptimisticFollowing] = useState(isFollowing);
+  const [optimisticFollowers, setOptimisticFollowers] = useState(user.followers_count || 0);
+
+  // ✅ NEW: Handle follow button click with optimistic UI
+  const handleFollowClick = async () => {
+    if (!onFollowToggle) return;
+    
+    // Optimistic update
+    const newFollowingState = !optimisticFollowing;
+    const newFollowersCount = newFollowingState ? optimisticFollowers + 1 : Math.max(0, optimisticFollowers - 1);
+    
+    setOptimisticFollowing(newFollowingState);
+    setOptimisticFollowers(newFollowersCount);
+    
+    // Call actual API
+    await onFollowToggle();
+  };
+
   return (
     <>
       {/* Profile Image */}
@@ -27,7 +48,7 @@ export default function ProfileHeader({ user, isFollowing, setIsFollowing }) {
           {user.name}
         </h2>
         {user.bio && (
-            <p className="text-sm text-primary dark:text-accent font-semibold text-center">
+          <p className="text-sm text-primary dark:text-accent font-semibold text-center">
             {user.bio}
           </p>
         )}
@@ -38,7 +59,7 @@ export default function ProfileHeader({ user, isFollowing, setIsFollowing }) {
         {/* Followers with badge */}
         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full">
           <span className="text-base font-bold text-primary dark:text-accent">
-            {user.followers_count?.toLocaleString() || 0}
+            {optimisticFollowers.toLocaleString()}
           </span>
           <span className="text-xs text-gray-600 dark:text-gray-400">Followers</span>
         </div>
@@ -46,21 +67,34 @@ export default function ProfileHeader({ user, isFollowing, setIsFollowing }) {
         {/* Following with badge */}
         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full">
           <span className="text-base font-bold text-primary dark:text-accent">
-            {user.following_count?.toLocaleString() || 0}
+            {(user.following_count || 0).toLocaleString()}
           </span>
           <span className="text-xs text-gray-600 dark:text-gray-400">Following</span>
         </div>
 
         {/* Follow Button */}
         <button
-          onClick={() => setIsFollowing(!isFollowing)}
+          onClick={handleFollowClick}
+          disabled={isLoading}
           className={`px-5 py-2 rounded-full font-semibold text-sm transition-all duration-300 ${
-            isFollowing
+            optimisticFollowing
               ? "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
               : "bg-primary dark:bg-accent text-white hover:bg-primary/90 dark:hover:bg-accent/90"
-          }`}
+          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {isFollowing ? "✓ Following" : "+ Follow"}
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              Processing...
+            </span>
+          ) : optimisticFollowing ? (
+            "✓ Following"
+          ) : (
+            "+ Follow"
+          )}
         </button>
       </div>
     </>
