@@ -26,7 +26,6 @@ export const getFollowers = async (userId) => {
       return { error: 'Failed to fetch followers' };
     }
 
-    // Flatten the data structure
     const followers = data?.map(f => f.follower) || [];
     return { success: true, followers };
 
@@ -79,7 +78,7 @@ export const sharePostWithUser = async (postId, sharedBy, sharedWith) => {
  * Share post to all followers
  * @param {string} postId - Post ID
  * @param {string} sharedBy - Who is sharing
- * @returns {Promise<{success: boolean, count?: number, error?: string}>}
+ * @returns {Promise<{success: boolean, share?: object, error?: string}>}
  */
 export const sharePostToAllFollowers = async (postId, sharedBy) => {
   try {
@@ -87,7 +86,8 @@ export const sharePostToAllFollowers = async (postId, sharedBy) => {
       return { error: 'Missing required data' };
     }
 
-    // Insert one share record with shared_with = NULL to indicate "share to all"
+    console.log("📢 Sharing post to all followers:", { postId, sharedBy });
+
     const { data, error } = await supabase
       .from('shares')
       .insert([
@@ -106,6 +106,7 @@ export const sharePostToAllFollowers = async (postId, sharedBy) => {
       return { error: 'Failed to share to all followers' };
     }
 
+    console.log("✅ Shared successfully");
     return { success: true, share: data };
 
   } catch (error) {
@@ -144,7 +145,82 @@ export const getShareCount = async (postId) => {
 };
 
 /**
- * Get posts shared with current user
+ * ✅ NEW FUNCTION: Get posts SHARED BY user (posts this user shared out)
+ * This is different from getSharedPostsForUser (posts shared WITH you)
+ * @param {string} userId - User ID who shared the posts
+ * @returns {Promise<{success: boolean, posts?: array}>}
+ */
+export const getPostsSharedByUser = async (userId) => {
+  try {
+    if (!userId) {
+      console.log("❌ No userId provided");
+      return { success: true, posts: [] };
+    }
+
+    console.log("📤 Fetching posts shared BY user:", userId);
+
+    // Step 1: Get all shares where this user is the sharer
+    const { data: shares, error: sharesError } = await supabase
+      .from('shares')
+      .select('*')
+      .eq('shared_by', userId);
+
+    if (sharesError) {
+      console.error("❌ Shares fetch error:", sharesError);
+      return { success: true, posts: [] };
+    }
+
+    console.log(`✅ Found ${shares?.length || 0} shares for user`);
+
+    if (!shares || shares.length === 0) {
+      return { success: true, posts: [] };
+    }
+
+    // Step 2: Get all unique post IDs
+    const postIds = [...new Set(shares.map(s => s.post_id))];
+    console.log(`📋 Fetching ${postIds.length} unique posts...`);
+
+    // Step 3: Fetch the actual posts with user data
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*, users(user_id, name, email, profile_image)')
+      .in('id', postIds);
+
+    if (postsError) {
+      console.error("❌ Posts fetch error:", postsError);
+      return { success: true, posts: [] };
+    }
+
+    console.log(`✅ Got ${posts?.length || 0} posts from DB`);
+
+    // Step 4: Combine shares with posts
+    const result = shares
+      .map(share => {
+        const post = posts?.find(p => p.id === share.post_id);
+        if (!post) return null;
+
+        return {
+          share_id: share.id || share.share_id,
+          post_id: share.post_id,
+          shared_with: share.shared_with,
+          share_type: share.share_type,
+          created_at: share.created_at,
+          posts: post
+        };
+      })
+      .filter(s => s !== null);
+
+    console.log(`✅ Returning ${result.length} complete shared posts`);
+    return { success: true, posts: result };
+
+  } catch (error) {
+    console.error('❌ Exception in getPostsSharedByUser:', error);
+    return { success: true, posts: [] };
+  }
+};
+
+/**
+ * Get posts shared WITH current user
  * @param {string} userId - Current user ID
  * @returns {Promise<{success: boolean, posts?: array, error?: string}>}
  */
@@ -219,7 +295,6 @@ export const deleteShare = async (shareId, userId) => {
       return { error: 'Missing share or user ID' };
     }
 
-    // Verify the share belongs to the user
     const { data: share, error: fetchError } = await supabase
       .from('shares')
       .select('shared_by')

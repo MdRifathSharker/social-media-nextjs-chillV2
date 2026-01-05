@@ -7,13 +7,13 @@ import MessageSection from "./MessageSection";
 import NotificationSection from "./NotificationSection";
 import ProfileSection from "./ProfileSection";
 
-export default function Sidebar({ currentUser }) {
+export default function Sidebar({ currentUser, setSelectedProfile }) {
   const [activeTab, setActiveTab] = useState("following");
 
   const renderContent = () => {
     switch (activeTab) {
       case "following":
-        return <FollowingSection currentUser={currentUser} />;
+        return <FollowingSection currentUser={currentUser} setSelectedProfile={setSelectedProfile} />;
 
       case "message":
         return <MessageSection />;

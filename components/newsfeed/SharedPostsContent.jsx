@@ -2,22 +2,20 @@
 
 import { useState, useEffect } from "react";
 import FlexiblePost from "@/components/FlexiblePost";
-import { getSharedPostsForUser } from "@/utils/shares";
+import { getUserPosts } from "@/utils/posts";
+import { getPostsSharedByUser } from "@/utils/shares";
 
 export default function SharedPostsContent({ currentUser }) {
-  const [sharedPosts, setSharedPosts] = useState([]);
+  const [allItems, setAllItems] = useState([]); // Combined posts + shared posts
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get user ID from props or localStorage
   const userId = currentUser?.user_id || (typeof window !== 'undefined' ? localStorage.getItem("userId") : null);
-  const userName = currentUser?.name || (typeof window !== 'undefined' ? localStorage.getItem("userName") : "User");
-  const userEmail = currentUser?.email || (typeof window !== 'undefined' ? localStorage.getItem("userEmail") : "");
 
   useEffect(() => {
-    const fetchSharedPosts = async () => {
+    const fetchAllContent = async () => {
       if (!userId) {
-        setError("Please login to view shared posts");
+        setError("Please login");
         setLoading(false);
         return;
       }
@@ -25,41 +23,74 @@ export default function SharedPostsContent({ currentUser }) {
       try {
         setLoading(true);
         setError(null);
-        console.log("Fetching shared posts for user:", userId);
+        console.log("📥 Fetching user's posts and shares:", userId);
 
-        const result = await getSharedPostsForUser(userId);
+        // Fetch both regular posts AND shared posts
+        const [postsResult, sharedResult] = await Promise.all([
+          getUserPosts(userId),
+          getPostsSharedByUser(userId)
+        ]);
 
-        if (result.success) {
-          console.log("Shared posts fetched:", result.posts);
-          setSharedPosts(result.posts || []);
-        } else {
-          console.error("Error fetching shared posts:", result.error);
-          setError(result.error || "Failed to load shared posts");
+        console.log("📥 Posts result:", postsResult);
+        console.log("📤 Shared posts result:", sharedResult);
+
+        // Combine them
+        const combined = [];
+
+        // Add regular posts
+        if (postsResult.success && postsResult.posts) {
+          postsResult.posts.forEach(post => {
+            combined.push({
+              type: 'post',
+              id: post.id,
+              data: post,
+              timestamp: post.created_at
+            });
+          });
         }
+
+        // Add shared posts
+        if (sharedResult.success && sharedResult.posts) {
+          sharedResult.posts.forEach(share => {
+            if (share.posts) {
+              combined.push({
+                type: 'share',
+                id: share.share_id,
+                data: share,
+                timestamp: share.created_at
+              });
+            }
+          });
+        }
+
+        // Sort by timestamp (newest first)
+        combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        console.log(`✅ Combined ${combined.length} items (posts + shares)`);
+        setAllItems(combined);
+
       } catch (err) {
-        console.error("Error:", err);
-        setError("An error occurred while loading shared posts");
+        console.error("❌ Error:", err);
+        setError("Failed to load content");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSharedPosts();
+    fetchAllContent();
   }, [userId]);
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
           <div className="animate-spin text-4xl mb-2">⏳</div>
-          <p className="text-gray-600 dark:text-gray-400">Loading shared posts...</p>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -70,54 +101,73 @@ export default function SharedPostsContent({ currentUser }) {
     );
   }
 
-  // Empty state
-  if (sharedPosts.length === 0) {
+  if (allItems.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">📤 No posts shared with you yet</p>
-          <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Posts shared by others will appear here</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">📭 No posts or shared content</p>
+          <p className="text-gray-500 text-sm mt-2">Create or share posts to see them here</p>
         </div>
       </div>
     );
   }
 
-  // Display shared posts
+  // Display combined timeline
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        📤 {sharedPosts.length} post{sharedPosts.length !== 1 ? 's' : ''} shared with you
+        📊 {allItems.length} item{allItems.length !== 1 ? 's' : ''} (posts + shares)
       </div>
 
-      {sharedPosts.map((share) => (
-        <div key={share.share_id} className="space-y-2">
-          {/* Shared by info */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 px-2 flex items-center gap-2">
-            <img
-              src={share.sharer?.profile_image || `https://i.pravatar.cc/24?u=${share.sharer?.email}`}
-              alt="avatar"
-              className="w-5 h-5 rounded-full object-cover"
-            />
-            <span>
-              <strong>{share.sharer?.name}</strong>
-              {share.share_type === 'all' ? ' shared with all followers' : ' shared with you'}
-            </span>
-          </div>
+      {allItems.map((item) => {
+        if (item.type === 'post') {
+          // Regular post
+          const post = item.data;
+          const author = post.users;
 
-          {/* Post */}
-          {share.posts && (
-            <FlexiblePost
-              name={share.posts.users?.name || "Unknown"}
-              username={share.posts.users?.email?.split("@")[0] || "@user"}
-              image={share.posts.image_url || null}
-              caption={share.posts.content || null}
-              profileImage={share.posts.users?.profile_image}
-              postId={share.posts.id}
-              currentUserId={userId}
-            />
-          )}
-        </div>
-      ))}
+          return (
+            <div key={`post-${item.id}`} className="relative">
+              <FlexiblePost
+                name={author?.name || "Unknown"}
+                username={author?.email?.split("@")[0] || "@user"}
+                image={post.image_url || null}
+                caption={post.content || null}
+                profileImage={author?.profile_image}
+                postId={post.id}
+                currentUserId={userId}
+              />
+            </div>
+          );
+        } else if (item.type === 'share') {
+          // Shared post
+          const share = item.data;
+          const post = share.posts;
+          const author = post?.users;
+
+          if (!post) return null;
+
+          return (
+            <div key={`share-${item.id}`} className="relative">
+              {/* Badge showing this is a shared post */}
+              <div className="absolute top-2 right-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-semibold z-10">
+                {share.share_type === 'all' ? '📢 Shared' : '🔗 Shared'}
+              </div>
+
+              <FlexiblePost
+                name={author?.name || "Unknown"}
+                username={author?.email?.split("@")[0] || "@user"}
+                image={post.image_url || null}
+                caption={post.content || null}
+                profileImage={author?.profile_image}
+                postId={post.id}
+                currentUserId={userId}
+              />
+            </div>
+          );
+        }
+
+        return null;
+      })}
     </div>
   );
 }

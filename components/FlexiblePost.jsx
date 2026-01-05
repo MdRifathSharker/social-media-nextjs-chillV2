@@ -5,7 +5,17 @@ import ShareModal from "@/components/ShareModal";
 import { toggleLike, getLikeCount, isPostLikedByUser, addComment, getComments, deleteComment } from "@/utils/posts";
 import { getShareCount } from "@/utils/shares";
 
-export default function FlexiblePost({ name, username, image, caption, onDelete, profileImage, postId, currentUserId }) {
+export default function FlexiblePost({ 
+  name, 
+  username, 
+  image, 
+  caption, 
+  onDelete, 
+  profileImage, 
+  postId, 
+  currentUserId, 
+  onUserClick 
+}) {
   // Like states
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -39,9 +49,7 @@ export default function FlexiblePost({ name, username, image, caption, onDelete,
 
   // Theme colors
   const upvoteColor = darkMode ? "#4cc297" : "#3EB489";
-  const downvoteColor = "#DC143c";
 
-  // Check if image exists
   const hasImage = image && !image.includes("placeholder");
 
   // Load like data on mount
@@ -92,7 +100,7 @@ export default function FlexiblePost({ name, username, image, caption, onDelete,
     loadShareCount();
   }, [postId]);
 
-  // Load comments on mount and when showComments changes
+  // Load comments
   useEffect(() => {
     const loadComments = async () => {
       if (!postId) return;
@@ -187,15 +195,13 @@ export default function FlexiblePost({ name, username, image, caption, onDelete,
     setShowShareModal(true);
   };
 
-  // Handle successful share
   const handleShareSuccess = () => {
-    // Increment share count
     setShareCount(shareCount + 1);
   };
 
   return (
     <div className="bg-accent dark:bg-accent-dark rounded-2xl shadow p-4 relative">
-      {/* Delete button (if provided) */}
+      {/* Delete button */}
       {onDelete && (
         <button
           onClick={onDelete}
@@ -214,17 +220,22 @@ export default function FlexiblePost({ name, username, image, caption, onDelete,
           alt="avatar"
         />
         <div>
-          <p className="font-semibold">{name}</p>
+          <button
+            onClick={onUserClick}
+            className="font-semibold hover:text-primary dark:hover:text-accent transition cursor-pointer"
+          >
+            {name}
+          </button>
           <p className="text-sm opacity-70">{username}</p>
         </div>
       </div>
 
-      {/* Caption - ONLY if it exists */}
+      {/* Caption */}
       {caption && caption !== "(No caption)" && (
         <p className="mt-2 mb-3">{caption}</p>
       )}
 
-      {/* Image - ONLY if it exists and is not placeholder */}
+      {/* Image */}
       {hasImage && (
         <img
           src={image}
@@ -262,7 +273,7 @@ export default function FlexiblePost({ name, username, image, caption, onDelete,
           💬 {comments.length}
         </button>
 
-        {/* Share button with count */}
+        {/* Share button */}
         <button
           onClick={handleShare}
           disabled={!currentUserId}

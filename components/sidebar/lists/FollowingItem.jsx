@@ -1,23 +1,14 @@
-// components/lists/FollowingItem.jsx
-// "use client";
-
-// import { useState } from "react";
-// import { User, ExternalLink } from "lucide-react";
-// import { unfollowUser } from "@/utils/followService";
-
 // components/sidebar/lists/FollowingItem.jsx
 "use client";
 
 import { useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { unfollowUser } from "@/utils/followService";
-import { useRouter } from "next/navigation";
 
-export default function FollowingItem({ user_id, name, avatar, headline }) {
+export default function FollowingItem({ user_id, name, avatar, headline, userData, setSelectedProfile }) {
   const [isFollowing, setIsFollowing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [showUnfollowConfirm, setShowUnfollowConfirm] = useState(false);
-  const router = useRouter();
 
   const handleUnfollow = async () => {
     try {
@@ -46,7 +37,9 @@ export default function FollowingItem({ user_id, name, avatar, headline }) {
   };
 
   const handleViewProfile = () => {
-    router.push(`/profile/${user_id}`);
+    if (userData && setSelectedProfile) {
+      setSelectedProfile(userData);
+    }
   };
 
   if (!isFollowing) {

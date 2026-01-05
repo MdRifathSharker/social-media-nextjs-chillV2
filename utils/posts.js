@@ -480,3 +480,61 @@ export const deleteComment = async (commentId, userId) => {
     return { error: error.message || 'Failed to delete comment' };
   }
 };
+
+/**
+ * 🆕 GET POSTS FROM USERS THAT CURRENT USER FOLLOWS
+ * @param {string} userId - Current user ID
+ * @param {number} offset - Pagination offset (default 0)
+ * @param {number} limit - Number of posts to fetch (default 10)
+ * @returns {Promise<{success: boolean, posts?: array, hasMore?: boolean, error?: string}>}
+ */
+export const getFollowingUsersPosts = async (userId, offset = 0, limit = 10) => {
+  try {
+    if (!userId) {
+      return { error: 'User not authenticated' };
+    }
+
+    console.log(`📥 Fetching following users posts: offset=${offset}, limit=${limit}`);
+
+    // Step 1: Get list of users that current user follows
+    const { data: followingData, error: followError } = await supabase
+      .from('followers')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    if (followError) {
+      console.error('Get following error:', followError);
+      return { error: 'Failed to fetch following list' };
+    }
+
+    const followingIds = followingData?.map(f => f.following_id) || [];
+
+    if (followingIds.length === 0) {
+      console.log('ℹ️ User not following anyone');
+      return { success: true, posts: [], hasMore: false };
+    }
+
+    console.log(`📊 Following ${followingIds.length} users, fetching their posts...`);
+
+    // Step 2: Get posts from following users
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*, users(name, username, user_id, profile_image, email)')
+      .in('user_id', followingIds)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (postsError) {
+      console.error('Get posts error:', postsError);
+      return { error: 'Failed to fetch posts' };
+    }
+
+    const hasMore = posts?.length === limit;
+    console.log(`✅ Fetched ${posts?.length || 0} posts`);
+    return { success: true, posts: posts || [], hasMore };
+
+  } catch (error) {
+    console.error('Get following posts error:', error);
+    return { error: error.message || 'Failed to fetch posts' };
+  }
+};

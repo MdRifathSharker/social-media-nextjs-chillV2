@@ -1,15 +1,41 @@
 // components/othersprofile/ProfileHeader.jsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getFollowersCount } from "@/utils/shares";
 
-export default function ProfileHeader({ user, isFollowing, onFollowToggle, isLoading }) {
-  
-  // ✅ NEW: Local state for optimistic UI updates
-  const [optimisticFollowing, setOptimisticFollowing] = useState(isFollowing);
-  const [optimisticFollowers, setOptimisticFollowers] = useState(user.followers_count || 0);
+export default function ProfileHeader({ user, isFollowing: initialIsFollowing, onFollowToggle, isLoading }) {
+  const [optimisticFollowing, setOptimisticFollowing] = useState(initialIsFollowing);
+  const [optimisticFollowers, setOptimisticFollowers] = useState(user?.followers_count || 0);
 
-  // ✅ NEW: Handle follow button click with optimistic UI
+  // Update optimistic state when initial follow state changes
+  useEffect(() => {
+    console.log("ProfileHeader: isFollowing updated to:", initialIsFollowing);
+    setOptimisticFollowing(initialIsFollowing || false);
+  }, [initialIsFollowing]);
+
+  // Update follower count when user changes
+  useEffect(() => {
+    if (!user?.user_id) return;
+
+    const fetchFollowersCount = async () => {
+      try {
+        console.log("Fetching followers count for:", user.user_id);
+        const result = await getFollowersCount(user.user_id);
+        
+        if (result.success) {
+          console.log("Followers count fetched:", result.count);
+          setOptimisticFollowers(result.count || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching followers count:", error);
+        setOptimisticFollowers(user?.followers_count || 0);
+      }
+    };
+
+    fetchFollowersCount();
+  }, [user?.user_id]);
+
   const handleFollowClick = async () => {
     if (!onFollowToggle) return;
     
@@ -54,8 +80,8 @@ export default function ProfileHeader({ user, isFollowing, onFollowToggle, isLoa
         )}
       </div>
 
-      {/* Stats and Follow Button - Compact one line */}
-      <div className="flex items-center justify-center gap-4 mb-6">
+      {/* Stats and Follow Button */}
+      <div className="flex items-center justify-center gap-4 mb-6 flex-wrap">
         {/* Followers with badge */}
         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full">
           <span className="text-base font-bold text-primary dark:text-accent">

@@ -1,56 +1,51 @@
-// components/lists/FollowingSection.jsx
+// components/sidebar/FollowingSection.jsx
 "use client";
 
 import { useState, useEffect } from "react";
 import FollowingItem from "./lists/FollowingItem";
 import { getFollowing } from "@/utils/followService";
 
-// // components/sidebar/FollowingSection.jsx
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import FollowingItem from "./lists/FollowingItem"; // ✅ Now it's correct
-// import { getFollowing } from "@/utils/followService";
-
-export default function FollowingSection({ userId }) {
+export default function FollowingSection({ currentUser, setSelectedProfile }) {
   const [following, setFollowing] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!userId) {
-      const storedUserId = localStorage.getItem("userId");
-      if (!storedUserId) {
-        setIsLoading(false);
-        setError("User not logged in");
-        return;
-      }
-      fetchFollowingData(storedUserId);
-    } else {
-      fetchFollowingData(userId);
-    }
-  }, [userId]);
+  const userId = currentUser?.user_id || (typeof window !== 'undefined' ? localStorage.getItem("userId") : null);
 
   const fetchFollowingData = async (id) => {
     try {
       setIsLoading(true);
       setError(null);
       
+      console.log("Fetching following for user:", id);
       const result = await getFollowing(id);
+      
+      console.log("Following result:", result);
       
       if (result.success) {
         setFollowing(result.following || []);
       } else {
         setError(result.error || "Failed to load following");
         console.error("Failed to fetch following:", result.error);
+        setFollowing([]);
       }
     } catch (err) {
       setError("An unexpected error occurred");
       console.error("Error fetching following:", err);
+      setFollowing([]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!userId) {
+      setIsLoading(false);
+      setError("User not logged in");
+      return;
+    }
+    fetchFollowingData(userId);
+  }, [userId]);
 
   const handleRefresh = () => {
     const currentUserId = userId || localStorage.getItem("userId");
@@ -140,6 +135,8 @@ export default function FollowingSection({ userId }) {
             name={user.name}
             avatar={user.profile_image || "/default-avatar.png"}
             headline={user.bio || "Member"}
+            userData={user}
+            setSelectedProfile={setSelectedProfile}
           />
         ))}
       </div>
