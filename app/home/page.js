@@ -30,7 +30,7 @@ export default function HomePage() {
       const userName = localStorage.getItem("userName");
       const userEmail = localStorage.getItem("userEmail");
       
-      console.log("📄 HomePage useEffect - localStorage data:", {
+      console.log("ðŸ“„ HomePage useEffect - localStorage data:", {
         userId,
         userName,
         userEmail
@@ -51,17 +51,17 @@ export default function HomePage() {
         
         if (userData) {
           setCurrentUser(userData);
-          console.log("✅ CurrentUser set from localStorage:", userData);
+          console.log("âœ… CurrentUser set from localStorage:", userData);
         } else {
           setCurrentUser({
             user_id: userId,
             name: userName,
             email: userEmail
           });
-          console.log("✅ CurrentUser created from localStorage data");
+          console.log("âœ… CurrentUser created from localStorage data");
         }
       } else {
-        console.log("⚠️ No user data in localStorage, redirecting to login");
+        console.log("âš ï¸ No user data in localStorage, redirecting to login");
         window.location.href = "/";
       }
     }
@@ -100,7 +100,8 @@ export default function HomePage() {
           {selectedProfile ? (
             <OtherProfileView 
               user={selectedProfile}
-              onBack={() => setSelectedProfile(null)} 
+              onBack={() => setSelectedProfile(null)}
+              setSelectedProfile={setSelectedProfile}
             />
           ) : (
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg h-full flex flex-col">

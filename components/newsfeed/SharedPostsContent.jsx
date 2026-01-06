@@ -23,7 +23,7 @@ export default function SharedPostsContent({ currentUser }) {
       try {
         setLoading(true);
         setError(null);
-        console.log("📥 Fetching user's posts and shares:", userId);
+        console.log("ðŸ“¥ Fetching user's posts and shares:", userId);
 
         // Fetch both regular posts AND shared posts
         const [postsResult, sharedResult] = await Promise.all([
@@ -31,8 +31,8 @@ export default function SharedPostsContent({ currentUser }) {
           getPostsSharedByUser(userId)
         ]);
 
-        console.log("📥 Posts result:", postsResult);
-        console.log("📤 Shared posts result:", sharedResult);
+        console.log("ðŸ“¥ Posts result:", postsResult);
+        console.log("ðŸ“¤ Shared posts result:", sharedResult);
 
         // Combine them
         const combined = [];
@@ -66,11 +66,11 @@ export default function SharedPostsContent({ currentUser }) {
         // Sort by timestamp (newest first)
         combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        console.log(`✅ Combined ${combined.length} items (posts + shares)`);
+        console.log(`âœ… Combined ${combined.length} items (posts + shares)`);
         setAllItems(combined);
 
       } catch (err) {
-        console.error("❌ Error:", err);
+        console.error("âŒ Error:", err);
         setError("Failed to load content");
       } finally {
         setLoading(false);
@@ -84,7 +84,7 @@ export default function SharedPostsContent({ currentUser }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-2">⏳</div>
+          <div className="animate-spin text-4xl mb-2">â³</div>
           <p className="text-gray-600 dark:text-gray-400">Loading...</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function SharedPostsContent({ currentUser }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center p-4 bg-red-100 dark:bg-red-900 rounded-lg">
-          <p className="text-red-700 dark:text-red-200">❌ {error}</p>
+          <p className="text-red-700 dark:text-red-200">âŒ {error}</p>
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export default function SharedPostsContent({ currentUser }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">📭 No posts or shared content</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">ðŸ“­ No posts or shared content</p>
           <p className="text-gray-500 text-sm mt-2">Create or share posts to see them here</p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function SharedPostsContent({ currentUser }) {
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        📊 {allItems.length} item{allItems.length !== 1 ? 's' : ''} (posts + shares)
+        ðŸ“Š {allItems.length} item{allItems.length !== 1 ? 's' : ''} (posts + shares)
       </div>
 
       {allItems.map((item) => {
@@ -135,6 +135,8 @@ export default function SharedPostsContent({ currentUser }) {
                 profileImage={author?.profile_image}
                 postId={post.id}
                 currentUserId={userId}
+                postAuthor={author}
+                createdAt={post.created_at}
               />
             </div>
           );
@@ -150,7 +152,7 @@ export default function SharedPostsContent({ currentUser }) {
             <div key={`share-${item.id}`} className="relative">
               {/* Badge showing this is a shared post */}
               <div className="absolute top-2 right-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 text-xs px-2 py-1 rounded-full font-semibold z-10">
-                {share.share_type === 'all' ? '📢 Shared' : '🔗 Shared'}
+                {share.share_type === 'all' ? 'ðŸ“¢ Shared' : 'ðŸ”— Shared'}
               </div>
 
               <FlexiblePost
@@ -161,6 +163,8 @@ export default function SharedPostsContent({ currentUser }) {
                 profileImage={author?.profile_image}
                 postId={post.id}
                 currentUserId={userId}
+                postAuthor={author}
+                createdAt={post.created_at}
               />
             </div>
           );

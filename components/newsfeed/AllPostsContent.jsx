@@ -108,7 +108,9 @@ export default function AllPostsContent({ currentUser, setSelectedProfile }) {
           profileImage={post.users?.profile_image}
           postId={post.id}
           currentUserId={userId}
-          onUserClick={() => handleUserClick(post.users)}
+          onUserClick={handleUserClick}
+          postAuthor={post.users}
+          createdAt={post.created_at}
         />
       ))}
 

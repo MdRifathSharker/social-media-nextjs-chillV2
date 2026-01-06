@@ -12,7 +12,7 @@ import { getCompleteOtherUserData } from "@/utils/otherProfileService";
 import { getPostsSharedByUser } from "@/utils/shares";
 import { followUser, unfollowUser } from "@/utils/followService";
 
-export default function OtherProfileView({ user: initialUser, onBack }) {
+export default function OtherProfileView({ user: initialUser, onBack, setSelectedProfile }) {
   const [user, setUser] = useState(initialUser);
   const [experience, setExperience] = useState([]);
   const [posts, setPosts] = useState([]);
@@ -26,13 +26,20 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
     setCurrentUserId(userId);
   }, []);
 
+  // Handle user click from comments
+  const handleUserClick = (clickedUser) => {
+    if (setSelectedProfile && clickedUser) {
+      setSelectedProfile(clickedUser);
+    }
+  };
+
   useEffect(() => {
     if (!initialUser?.user_id) return;
 
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        console.log("🔍 Fetching data for user:", initialUser.user_id);
+        console.log("ðŸ” Fetching data for user:", initialUser.user_id);
 
         // Get user profile and follow status
         const completeResult = await getCompleteOtherUserData(initialUser.user_id, currentUserId);
@@ -49,17 +56,17 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
           setPosts(postsResult.posts || []);
         }
 
-        // ✅ Get posts THEY shared (NEW)
-        console.log("📤 Fetching posts shared BY this user:", initialUser.user_id);
+        // âœ… Get posts THEY shared (NEW)
+        console.log("ðŸ“¤ Fetching posts shared BY this user:", initialUser.user_id);
         const sharedResult = await getPostsSharedByUser(initialUser.user_id);
-        console.log("📤 Shared posts result:", sharedResult);
+        console.log("ðŸ“¤ Shared posts result:", sharedResult);
         
         if (sharedResult.success) {
           setSharedPosts(sharedResult.posts || []);
         }
 
       } catch (err) {
-        console.error("❌ Error fetching profile data:", err);
+        console.error("âŒ Error fetching profile data:", err);
       } finally {
         setIsLoading(false);
       }
@@ -214,6 +221,9 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
                       profileImage={user.profile_image}
                       postId={post.id}
                       currentUserId={currentUserId}
+                      onUserClick={handleUserClick}
+                      postAuthor={user}
+                      createdAt={post.created_at}
                     />
                   ))}
                 </div>
@@ -221,11 +231,11 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
             </div>
           </div>
 
-          {/* ✅ Shared Posts Section (NEW) */}
+          {/* âœ… Shared Posts Section (NEW) */}
           <div className="w-full">
             <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 shadow-md">
               <h3 className="text-lg font-bold mb-6 text-text dark:text-text-dark">
-                📤 Shared Posts ({sharedPosts.length})
+                ðŸ“¤ Shared Posts ({sharedPosts.length})
               </h3>
               
               {sharedPosts.length === 0 ? (
@@ -241,7 +251,7 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
                     return (
                       <div key={share.share_id} className="space-y-2">
                         <div className="text-xs text-gray-500 dark:text-gray-400 px-2">
-                          {author?.name}'s post {share.share_type === 'all' ? '📢 shared with all followers' : '🔗 shared'}
+                          {author?.name}'s post {share.share_type === 'all' ? 'ðŸ“¢ shared with all followers' : 'ðŸ”— shared'}
                         </div>
 
                         <FlexiblePost
@@ -252,6 +262,9 @@ export default function OtherProfileView({ user: initialUser, onBack }) {
                           profileImage={author?.profile_image}
                           postId={post.id}
                           currentUserId={currentUserId}
+                          onUserClick={handleUserClick}
+                          postAuthor={author}
+                          createdAt={post.created_at}
                         />
                       </div>
                     );

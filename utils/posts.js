@@ -251,7 +251,7 @@ export const getUserProfile = async (userId) => {
 };
 
 /**
- * Toggle like on a post (add if not liked, remove if liked)
+ * Toggle like on a post (add if not liked, remove if liked) - FIXED VERSION
  * @param {string} postId - Post ID
  * @param {string} userId - Current user ID
  * @returns {Promise<{success: boolean, liked?: boolean, error?: string}>}
@@ -262,43 +262,56 @@ export const toggleLike = async (postId, userId) => {
       return { error: 'Missing post or user ID' };
     }
 
-    // Check if user already liked this post
+    console.log('🔄 Toggling like:', { postId, userId });
+
+    // Check if user already liked this post - FIXED: Handle PGRST116 error
     const { data: existingLike, error: checkError } = await supabase
       .from('likes')
       .select('like_id')
       .eq('post_id', postId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single()
+
+    // Log any non-PGRST116 errors
+    if (checkError && checkError.code !== 'PGRST116') {
+      console.error('❌ Check like error:', checkError);
+      return { error: 'Failed to check like status: ' + checkError.message };
+    }
 
     if (existingLike) {
       // User already liked, so unlike it
+      console.log('👎 Unliking post...');
       const { error } = await supabase
         .from('likes')
         .delete()
         .eq('like_id', existingLike.like_id);
 
       if (error) {
-        console.error('Unlike error:', error);
-        return { error: 'Failed to unlike post' };
+        console.error('❌ Unlike error:', error);
+        return { error: 'Failed to unlike post: ' + error.message };
       }
 
+      console.log('✅ Post unliked successfully');
       return { success: true, liked: false };
     }
 
     // User hasn't liked, so add like
+    console.log('👍 Liking post...');
     const { error } = await supabase
       .from('likes')
       .insert([{ post_id: postId, user_id: userId }]);
 
     if (error) {
-      console.error('Like error:', error);
-      return { error: 'Failed to like post' };
+      console.error('❌ Like error:', error);
+      console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+      return { error: 'Failed to like post: ' + error.message };
     }
 
+    console.log('✅ Post liked successfully');
     return { success: true, liked: true };
 
   } catch (error) {
-    console.error('Toggle like error:', error);
+    console.error('❌ Toggle like exception:', error);
     return { error: error.message || 'Failed to toggle like' };
   }
 };
@@ -349,7 +362,7 @@ export const isPostLikedByUser = async (postId, userId) => {
       .select('like_id')
       .eq('post_id', postId)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single()
 
     if (error && error.code !== 'PGRST116') {
       console.error('Check like error:', error);
@@ -365,7 +378,7 @@ export const isPostLikedByUser = async (postId, userId) => {
 };
 
 /**
- * Add a comment to a post
+ * Add a comment to a post - FIXED VERSION
  * @param {string} postId - Post ID
  * @param {string} userId - Current user ID
  * @param {string} commentText - Comment text
@@ -381,6 +394,8 @@ export const addComment = async (postId, userId, commentText) => {
       return { error: 'Comment cannot be empty' };
     }
 
+    console.log('💬 Adding comment:', { postId, userId, text: commentText.substring(0, 50) });
+
     const { data, error } = await supabase
       .from('comments')
       .insert([
@@ -394,14 +409,16 @@ export const addComment = async (postId, userId, commentText) => {
       .single();
 
     if (error) {
-      console.error('Add comment error:', error);
-      return { error: 'Failed to add comment' };
+      console.error('❌ Add comment error:', error);
+      console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+      return { error: 'Failed to add comment: ' + error.message };
     }
 
+    console.log('✅ Comment added successfully');
     return { success: true, comment: data };
 
   } catch (error) {
-    console.error('Add comment error:', error);
+    console.error('❌ Add comment exception:', error);
     return { error: error.message || 'Failed to add comment' };
   }
 };
@@ -419,7 +436,7 @@ export const getComments = async (postId) => {
 
     const { data, error } = await supabase
       .from('comments')
-      .select('*, users(name, email, profile_image)')
+      .select('*, users(user_id, name, email, profile_image, bio)')
       .eq('post_id', postId)
       .order('created_at', { ascending: true });
 
@@ -538,3 +555,200 @@ export const getFollowingUsersPosts = async (userId, offset = 0, limit = 10) => 
     return { error: error.message || 'Failed to fetch posts' };
   }
 };
+
+/**
+ * 👎 DISLIKE FUNCTIONS (NEW!)
+ */
+
+/**
+ * Toggle dislike on a post (add if not disliked, remove if disliked)
+ * @param {string} postId - Post ID
+ * @param {string} userId - Current user ID
+ * @returns {Promise<{success: boolean, disliked?: boolean, error?: string}>}
+ */
+export const toggleDislike = async (postId, userId) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post or user ID' };
+    }
+
+    // Check if user already disliked this post
+    const { data: existingDislike, error: checkError } = await supabase
+      .from('dislikes')
+      .select('dislike_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (existingDislike) {
+      // User already disliked, so remove dislike
+      const { error } = await supabase
+        .from('dislikes')
+        .delete()
+        .eq('dislike_id', existingDislike.dislike_id);
+
+      if (error) {
+        console.error('❌ Remove dislike error:', error);
+        console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+        return { error: 'Failed to remove dislike' };
+      }
+
+      return { success: true, disliked: false };
+    }
+
+    // User hasn't disliked, so add dislike
+    const { error } = await supabase
+      .from('dislikes')
+      .insert([{ post_id: postId, user_id: userId }]);
+
+    if (error) {
+      console.error('❌ Dislike error:', error);
+      console.error('❌ Full error details:', JSON.stringify(error, null, 2));
+      return { error: 'Failed to dislike post' };
+    }
+
+    return { success: true, disliked: true };
+
+  } catch (error) {
+    console.error('Toggle dislike error:', error);
+    return { error: error.message || 'Failed to toggle dislike' };
+  }
+};
+
+/**
+ * Get dislike count for a post
+ * @param {string} postId - Post ID
+ * @returns {Promise<{success: boolean, count?: number, error?: string}>}
+ */
+export const getDislikeCount = async (postId) => {
+  try {
+    if (!postId) {
+      return { error: 'Missing post ID' };
+    }
+
+    const { count, error } = await supabase
+      .from('dislikes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', postId);
+
+    if (error) {
+      console.error('Get dislike count error:', error);
+      return { error: 'Failed to fetch dislike count' };
+    }
+
+    return { success: true, count: count || 0 };
+
+  } catch (error) {
+    console.error('Dislike count error:', error);
+    return { error: error.message || 'Failed to get dislike count' };
+  }
+};
+
+/**
+ * Check if current user disliked a post
+ * @param {string} postId - Post ID
+ * @param {string} userId - Current user ID
+ * @returns {Promise<{success: boolean, disliked?: boolean, error?: string}>}
+ */
+export const isPostDislikedByUser = async (postId, userId) => {
+  try {
+    if (!postId || !userId) {
+      return { error: 'Missing post or user ID' };
+    }
+
+    const { data, error } = await supabase
+      .from('dislikes')
+      .select('dislike_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Check dislike error:', error);
+      return { error: 'Failed to check dislike status' };
+    }
+
+    return { success: true, disliked: !!data };
+
+  } catch (error) {
+    console.error('Is disliked error:', error);
+    return { error: error.message || 'Failed to check dislike' };
+  }
+};
+
+/**
+ * Get list of users who liked a post
+ * @param {string} postId - Post ID
+ * @returns {Promise<{success: boolean, users?: array, error?: string}>}
+ */
+export const getLikesUsers = async (postId) => {
+  try {
+    if (!postId) {
+      return { error: 'Missing post ID' };
+    }
+
+    const { data, error } = await supabase
+      .from('likes')
+      .select('user_id, users(name, email, profile_image)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: false })
+      .limit(20); // Limit to first 20 users
+
+    if (error) {
+      console.error('Get likes users error:', error);
+      return { error: 'Failed to fetch likes users' };
+    }
+
+    const users = (data || []).map(like => ({
+      user_id: like.user_id,
+      name: like.users?.name || 'Unknown',
+      email: like.users?.email,
+      profile_image: like.users?.profile_image
+    }));
+
+    return { success: true, users };
+
+  } catch (error) {
+    console.error('Get likes users error:', error);
+    return { error: error.message || 'Failed to fetch likes users' };
+  }
+};
+
+/**
+ * Get list of users who disliked a post
+ * @param {string} postId - Post ID
+ * @returns {Promise<{success: boolean, users?: array, error?: string}>}
+ */
+export const getDislikesUsers = async (postId) => {
+  try {
+    if (!postId) {
+      return { error: 'Missing post ID' };
+    }
+
+    const { data, error } = await supabase
+      .from('dislikes')
+      .select('user_id, users(name, email, profile_image)')
+      .eq('post_id', postId)
+      .order('created_at', { ascending: false })
+      .limit(20); // Limit to first 20 users
+
+    if (error) {
+      console.error('Get dislikes users error:', error);
+      return { error: 'Failed to fetch dislikes users' };
+    }
+
+    const users = (data || []).map(dislike => ({
+      user_id: dislike.user_id,
+      name: dislike.users?.name || 'Unknown',
+      email: dislike.users?.email,
+      profile_image: dislike.users?.profile_image
+    }));
+
+    return { success: true, users };
+
+  } catch (error) {
+    console.error('Get dislikes users error:', error);
+    return { error: error.message || 'Failed to fetch dislikes users' };
+  }
+};
+

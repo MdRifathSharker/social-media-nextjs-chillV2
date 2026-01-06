@@ -2,8 +2,45 @@
 
 import { useState, useEffect } from "react";
 import ShareModal from "@/components/ShareModal";
-import { toggleLike, getLikeCount, isPostLikedByUser, addComment, getComments, deleteComment } from "@/utils/posts";
+import { 
+  toggleLike, 
+  getLikeCount, 
+  isPostLikedByUser, 
+  addComment, 
+  getComments, 
+  deleteComment, 
+  toggleDislike, 
+  getDislikeCount, 
+  isPostDislikedByUser,
+  getLikesUsers,
+  getDislikesUsers
+} from "@/utils/posts";
 import { getShareCount } from "@/utils/shares";
+
+// Helper function to format timestamp
+const formatTimestamp = (dateString) => {
+  if (!dateString) return '';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  
+  // For anything older than 1 day, show date AND time
+  return date.toLocaleString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+};
 
 export default function FlexiblePost({ 
   name, 
@@ -14,12 +51,19 @@ export default function FlexiblePost({
   profileImage, 
   postId, 
   currentUserId, 
-  onUserClick 
+  onUserClick,
+  createdAt, // Accept created_at prop
+  postAuthor // NEW: Add post author data
 }) {
   // Like states
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [liking, setLiking] = useState(false);
+
+  // Dislike states
+  const [dislikes, setDislikes] = useState(0);
+  const [isDisliked, setIsDisliked] = useState(false);
+  const [disliking, setDisliking] = useState(false);
 
   // Comment states
   const [showComments, setShowComments] = useState(false);
@@ -32,6 +76,14 @@ export default function FlexiblePost({
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareCount, setShareCount] = useState(0);
   const [loadingShareCount, setLoadingShareCount] = useState(false);
+
+  // Hover tooltip states
+  const [showLikesHover, setShowLikesHover] = useState(false);
+  const [showDislikesHover, setShowDislikesHover] = useState(false);
+  const [likesUsers, setLikesUsers] = useState([]);
+  const [dislikesUsers, setDislikesUsers] = useState([]);
+  const [loadingLikesUsers, setLoadingLikesUsers] = useState(false);
+  const [loadingDislikesUsers, setLoadingDislikesUsers] = useState(false);
 
   // Dark mode
   const [darkMode, setDarkMode] = useState(
@@ -49,18 +101,21 @@ export default function FlexiblePost({
 
   // Theme colors
   const upvoteColor = darkMode ? "#4cc297" : "#3EB489";
+  const downvoteColor = "#DC143c";
 
   const hasImage = image && !image.includes("placeholder");
 
-  // Load like data on mount
+  // Load like and dislike data on mount
   useEffect(() => {
-    const loadLikeData = async () => {
+    const loadLikeDislikeData = async () => {
       if (!postId || !currentUserId) return;
 
       try {
-        const [likeCountResult, likedResult] = await Promise.all([
+        const [likeCountResult, likedResult, dislikeCountResult, dislikedResult] = await Promise.all([
           getLikeCount(postId),
-          isPostLikedByUser(postId, currentUserId)
+          isPostLikedByUser(postId, currentUserId),
+          getDislikeCount(postId),
+          isPostDislikedByUser(postId, currentUserId)
         ]);
 
         if (likeCountResult.success) {
@@ -70,12 +125,20 @@ export default function FlexiblePost({
         if (likedResult.success) {
           setIsLiked(likedResult.liked);
         }
+
+        if (dislikeCountResult.success) {
+          setDislikes(dislikeCountResult.count);
+        }
+
+        if (dislikedResult.success) {
+          setIsDisliked(dislikedResult.disliked);
+        }
       } catch (error) {
-        console.error("Error loading likes:", error);
+        console.error("Error loading likes/dislikes:", error);
       }
     };
 
-    loadLikeData();
+    loadLikeDislikeData();
   }, [postId, currentUserId]);
 
   // Load share count on mount
@@ -128,6 +191,17 @@ export default function FlexiblePost({
 
     try {
       setLiking(true);
+      
+      // If currently disliked, remove dislike first
+      if (isDisliked) {
+        const dislikeResult = await toggleDislike(postId, currentUserId);
+        if (dislikeResult.success) {
+          setDislikes(Math.max(0, dislikes - 1));
+          setIsDisliked(false);
+        }
+      }
+      
+      // Then toggle like
       const result = await toggleLike(postId, currentUserId);
 
       if (result.success) {
@@ -135,7 +209,7 @@ export default function FlexiblePost({
           setLikes(likes + 1);
           setIsLiked(true);
         } else {
-          setLikes(likes - 1);
+          setLikes(Math.max(0, likes - 1));
           setIsLiked(false);
         }
       }
@@ -143,6 +217,41 @@ export default function FlexiblePost({
       console.error("Error toggling like:", error);
     } finally {
       setLiking(false);
+    }
+  };
+
+  // Handle dislike/undislike
+  const handleDislike = async () => {
+    if (!postId || !currentUserId || disliking) return;
+
+    try {
+      setDisliking(true);
+      
+      // If currently liked, remove like first
+      if (isLiked) {
+        const likeResult = await toggleLike(postId, currentUserId);
+        if (likeResult.success) {
+          setLikes(Math.max(0, likes - 1));
+          setIsLiked(false);
+        }
+      }
+      
+      // Then toggle dislike
+      const result = await toggleDislike(postId, currentUserId);
+
+      if (result.success) {
+        if (result.disliked) {
+          setDislikes(dislikes + 1);
+          setIsDisliked(true);
+        } else {
+          setDislikes(Math.max(0, dislikes - 1));
+          setIsDisliked(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling dislike:", error);
+    } finally {
+      setDisliking(false);
     }
   };
 
@@ -199,6 +308,42 @@ export default function FlexiblePost({
     setShareCount(shareCount + 1);
   };
 
+  // Handle likes hover
+  const handleLikesMouseEnter = async () => {
+    if (!postId || loadingLikesUsers || likesUsers.length > 0) return;
+    
+    setShowLikesHover(true);
+    setLoadingLikesUsers(true);
+    
+    const result = await getLikesUsers(postId);
+    if (result.success) {
+      setLikesUsers(result.users || []);
+    }
+    setLoadingLikesUsers(false);
+  };
+
+  const handleLikesMouseLeave = () => {
+    setShowLikesHover(false);
+  };
+
+  // Handle dislikes hover
+  const handleDislikesMouseEnter = async () => {
+    if (!postId || loadingDislikesUsers || dislikesUsers.length > 0) return;
+    
+    setShowDislikesHover(true);
+    setLoadingDislikesUsers(true);
+    
+    const result = await getDislikesUsers(postId);
+    if (result.success) {
+      setDislikesUsers(result.users || []);
+    }
+    setLoadingDislikesUsers(false);
+  };
+
+  const handleDislikesMouseLeave = () => {
+    setShowDislikesHover(false);
+  };
+
   return (
     <div className="bg-accent dark:bg-accent-dark rounded-2xl shadow p-4 relative">
       {/* Delete button */}
@@ -219,14 +364,23 @@ export default function FlexiblePost({
           className="w-10 h-10 rounded-full object-cover"
           alt="avatar"
         />
-        <div>
+        <div className="flex-1">
           <button
-            onClick={onUserClick}
+            onClick={() => onUserClick && postAuthor && onUserClick(postAuthor)}
             className="font-semibold hover:text-primary dark:hover:text-accent transition cursor-pointer"
           >
             {name}
           </button>
-          <p className="text-sm opacity-70">{username}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm opacity-70">{username}</p>
+            {/* NEW: Timestamp display */}
+            {createdAt && (
+              <>
+                <span className="text-xs opacity-50">•</span>
+                <p className="text-xs opacity-50">{formatTimestamp(createdAt)}</p>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -246,24 +400,123 @@ export default function FlexiblePost({
 
       {/* Actions */}
       <div className="flex gap-6 mt-4 text-sm items-center">
-        {/* Like */}
-        <button
-          onClick={handleLike}
-          disabled={liking || !currentUserId}
-          className="flex items-center gap-1 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        {/* Upvote with hover tooltip */}
+        <div 
+          className="relative"
+          onMouseEnter={handleLikesMouseEnter}
+          onMouseLeave={handleLikesMouseLeave}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-5 h-5"
-            fill={isLiked ? upvoteColor : "none"}
-            viewBox="0 0 24 24"
-            stroke={upvoteColor}
-            strokeWidth={2}
+          <button
+            onClick={handleLike}
+            disabled={liking || !currentUserId}
+            className="flex items-center gap-1 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4l-8 12h16l-8-12z" />
-          </svg>
-          {likes}
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill={isLiked ? upvoteColor : "none"}
+              viewBox="0 0 24 24"
+              stroke={upvoteColor}
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4l-8 12h16l-8-12z" />
+            </svg>
+            {likes}
+          </button>
+
+          {/* Likes hover tooltip */}
+          {showLikesHover && likes > 0 && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 z-50">
+              <div className="text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                Liked by:
+              </div>
+              {loadingLikesUsers ? (
+                <div className="text-xs text-gray-500">Loading...</div>
+              ) : likesUsers.length === 0 ? (
+                <div className="text-xs text-gray-500">No one yet</div>
+              ) : (
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {likesUsers.map((user) => (
+                    <div key={user.user_id} className="flex items-center gap-2">
+                      <img
+                        src={user.profile_image || `https://i.pravatar.cc/24?u=${user.email}`}
+                        alt="avatar"
+                        className="w-4 h-4 rounded-full"
+                      />
+                      <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                        {user.name}
+                      </span>
+                    </div>
+                  ))}
+                  {likes > 20 && (
+                    <div className="text-xs text-gray-500 italic">
+                      and {likes - 20} more...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Downvote with hover tooltip */}
+        <div 
+          className="relative"
+          onMouseEnter={handleDislikesMouseEnter}
+          onMouseLeave={handleDislikesMouseLeave}
+        >
+          <button
+            onClick={handleDislike}
+            disabled={disliking || !currentUserId}
+            className="flex items-center gap-1 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-5 h-5"
+              fill={isDisliked ? downvoteColor : "none"}
+              viewBox="0 0 24 24"
+              stroke={downvoteColor}
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 20l8-12H4l8 12z" />
+            </svg>
+            {dislikes}
+          </button>
+
+          {/* Dislikes hover tooltip */}
+          {showDislikesHover && dislikes > 0 && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 z-50">
+              <div className="text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">
+                Disliked by:
+              </div>
+              {loadingDislikesUsers ? (
+                <div className="text-xs text-gray-500">Loading...</div>
+              ) : dislikesUsers.length === 0 ? (
+                <div className="text-xs text-gray-500">No one yet</div>
+              ) : (
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {dislikesUsers.map((user) => (
+                    <div key={user.user_id} className="flex items-center gap-2">
+                      <img
+                        src={user.profile_image || `https://i.pravatar.cc/24?u=${user.email}`}
+                        alt="avatar"
+                        className="w-4 h-4 rounded-full"
+                      />
+                      <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
+                        {user.name}
+                      </span>
+                    </div>
+                  ))}
+                  {dislikes > 20 && (
+                    <div className="text-xs text-gray-500 italic">
+                      and {dislikes - 20} more...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Comments button */}
         <button
@@ -326,7 +579,18 @@ export default function FlexiblePost({
                     alt="avatar"
                     className="w-6 h-6 rounded-full object-cover"
                   />
-                  <span className="font-semibold text-xs">{comment.users?.name}</span>
+                  <button
+                    onClick={() => onUserClick && comment.users && onUserClick(comment.users)}
+                    className="font-semibold text-xs hover:text-primary dark:hover:text-accent transition cursor-pointer"
+                  >
+                    {comment.users?.name}
+                  </button>
+                  {comment.created_at && (
+                    <>
+                      <span className="text-xs opacity-50">•</span>
+                      <span className="text-xs opacity-50">{formatTimestamp(comment.created_at)}</span>
+                    </>
+                  )}
                 </div>
                 {currentUserId === comment.user_id && (
                   <button

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import FlexiblePost from "@/components/FlexiblePost";
 import { uploadPostImage, createPost, getUserProfile } from "@/utils/posts";
 
@@ -13,6 +13,9 @@ export default function CreatePostContentV2({ currentUser }) {
   const [message, setMessage] = useState({ type: "", text: "" });
   const [userProfile, setUserProfile] = useState(null);
   const [fetchingProfile, setFetchingProfile] = useState(true);
+  
+  // File input ref for resetting
+  const fileInputRef = useRef(null);
 
   // Get current user from props or localStorage
   const user = currentUser || {
@@ -56,6 +59,21 @@ export default function CreatePostContentV2({ currentUser }) {
       const previewUrl = URL.createObjectURL(file);
       setImagePreviewUrl(previewUrl);
     }
+  };
+
+  // FIXED: Complete form reset function
+  const resetForm = () => {
+    setCaption("");
+    setImageFile(null);
+    setImagePreviewUrl(null);
+    setShowPreview(false);
+    
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    console.log("✅ Form reset completed");
   };
 
   // Handle post submission
@@ -115,19 +133,16 @@ export default function CreatePostContentV2({ currentUser }) {
       console.log("Post created successfully!");
       setMessage({ 
         type: "success", 
-        text: "Post created successfully! 🎉" 
+        text: "Post created successfully! 🎉 Refreshing..." 
       });
 
-      // Clear form
-      setCaption("");
-      setImageFile(null);
-      setImagePreviewUrl(null);
-      setShowPreview(false);
+      // FIXED: Reset form after success
+      resetForm();
 
-      // Clear message after 3 seconds
+      // FIXED: Reload page after 1.5 seconds to show new post
       setTimeout(() => {
-        setMessage({ type: "", text: "" });
-      }, 3000);
+        window.location.reload();
+      }, 1500);
 
     } catch (error) {
       console.error("Post creation error:", error);
@@ -144,6 +159,11 @@ export default function CreatePostContentV2({ currentUser }) {
   const handleClearImage = () => {
     setImageFile(null);
     setImagePreviewUrl(null);
+    
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -181,9 +201,10 @@ export default function CreatePostContentV2({ currentUser }) {
           rows={4}
         />
 
-        {/* Image upload */}
+        {/* Image upload with ref */}
         <div className="flex flex-col gap-2">
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
@@ -193,7 +214,7 @@ export default function CreatePostContentV2({ currentUser }) {
           {imageFile && (
             <div className="flex items-center justify-between gap-2 p-2 bg-blue-50 dark:bg-blue-900 rounded-lg text-sm">
               <span className="text-blue-700 dark:text-blue-200">
-                📁 {imageFile.name}
+                📎 {imageFile.name}
               </span>
               <button
                 onClick={handleClearImage}
