@@ -1,14 +1,15 @@
+// components/sidebar/Sidebar.jsx
 "use client";
 
 import { useState } from "react";
 import SidebarBottomNav from "./SidebarBottomNav";
 import FollowingSection from "./FollowingSection";
-import MessageSection from "./MessageSection";
 import NotificationSection from "./NotificationSection";
 import ProfileSection from "./ProfileSection";
+import ChatSection from "./chat/ChatSection";
 
 export default function Sidebar({ currentUser, setSelectedProfile }) {
-  const [activeTab, setActiveTab] = useState("following");
+  const [activeTab, setActiveTab] = useState("profile");
 
   const renderContent = () => {
     switch (activeTab) {
@@ -16,16 +17,16 @@ export default function Sidebar({ currentUser, setSelectedProfile }) {
         return <FollowingSection currentUser={currentUser} setSelectedProfile={setSelectedProfile} />;
 
       case "message":
-        return <MessageSection />;
+        return <ChatSection currentUser={currentUser} setSelectedProfile={setSelectedProfile} />;
 
       case "notification":
-        return <NotificationSection />;
+        return <NotificationSection currentUser={currentUser} />;
 
       case "profile":
         return <ProfileSection currentUser={currentUser} />;
 
       default:
-        return null;
+        return <ProfileSection currentUser={currentUser} />;
     }
   };
 
