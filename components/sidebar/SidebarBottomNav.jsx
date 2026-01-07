@@ -3,22 +3,41 @@
 
 import { Users, MessageCircle, Bell, User } from "lucide-react";
 import { useState, useEffect } from "react";
+import { chatService } from "@/utils/chatService";
 
 export default function SidebarBottomNav({ activeTab, setActiveTab }) {
-  const [unreadMessages, setUnreadMessages] = useState(3);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const base = "flex flex-col items-center justify-center py-3 transition relative";
   const active = "bg-primary text-white";
   const inactive = "text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700";
 
-  // Simulate receiving new messages
+  // Load unread message count with error handling
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Randomly add new messages
-      if (Math.random() > 0.7) {
-        setUnreadMessages(prev => Math.min(prev + 1, 99));
+    const loadUnreadCount = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (!userId) return;
+
+        const { success, count, error } = await chatService.getUnreadCount(userId);
+        
+        if (success) {
+          setUnreadCount(count);
+        } else {
+          console.warn("⚠️ Could not load unread count:", error);
+          // Set default if error
+          setUnreadCount(0);
+        }
+      } catch (error) {
+        console.error("Error loading unread count:", error);
+        setUnreadCount(0);
       }
-    }, 10000); // Check every 10 seconds
+    };
+
+    loadUnreadCount();
+    
+    // Refresh every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -36,28 +55,25 @@ export default function SidebarBottomNav({ activeTab, setActiveTab }) {
         <button
           onClick={() => {
             setActiveTab("message");
-            // Mark messages as read when opening chat
-            if (unreadMessages > 0) {
-              setUnreadMessages(0);
-            }
+            // Reset unread count when opening messages
+            setUnreadCount(0);
           }}
           className={`${base} ${activeTab === "message" ? active : inactive}`}
         >
           <div className="relative">
             <MessageCircle size={22} />
             {/* Red Dot for Unread Messages */}
-            {unreadMessages > 0 && (
+            {unreadCount > 0 && (
               <>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500/20 rounded-full animate-ping"></span>
               </>
             )}
           </div>
           <span className="text-xs mt-1">Message</span>
           {/* Badge with Count */}
-          {unreadMessages > 0 && (
+          {unreadCount > 0 && (
             <span className="absolute top-1 right-4 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-              {unreadMessages > 9 ? '9+' : unreadMessages}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </button>

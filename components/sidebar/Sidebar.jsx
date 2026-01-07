@@ -1,7 +1,7 @@
 // components/sidebar/Sidebar.jsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SidebarBottomNav from "./SidebarBottomNav";
 import FollowingSection from "./FollowingSection";
 import NotificationSection from "./NotificationSection";
@@ -10,38 +10,48 @@ import ChatSection from "./chat/ChatSection";
 
 export default function Sidebar({ currentUser, setSelectedProfile }) {
   const [activeTab, setActiveTab] = useState("profile");
+  const [showChatList, setShowChatList] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-  const renderContent = () => {
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    setUserId(storedUserId);
+  }, []);
+
+  const handleBackToChatList = () => {
+    setShowChatList(false);
+  };
+
+  const renderActiveSection = () => {
     switch (activeTab) {
       case "following":
-        return <FollowingSection currentUser={currentUser} setSelectedProfile={setSelectedProfile} />;
-
+        return <FollowingSection userId={userId} />;
       case "message":
-        return <ChatSection currentUser={currentUser} setSelectedProfile={setSelectedProfile} />;
-
+        return (
+          <ChatSection 
+            currentUser={currentUser} 
+            setSelectedProfile={setSelectedProfile}
+            onBack={handleBackToChatList}
+          />
+        );
       case "notification":
-        return <NotificationSection currentUser={currentUser} />;
-
+        return <NotificationSection userId={userId} />;
       case "profile":
         return <ProfileSection currentUser={currentUser} />;
-
       default:
-        return <ProfileSection currentUser={currentUser} />;
+        return <FollowingSection userId={userId} />;
     }
   };
 
   return (
-    <div className="w-1/4 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-full flex flex-col">
-      {/* Scrollable content */}
+    <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+      {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
-        {renderContent()}
+        {renderActiveSection()}
       </div>
-
-      {/* Fixed bottom navigation */}
-      <SidebarBottomNav
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
+      
+      {/* Bottom Navigation */}
+      <SidebarBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }
