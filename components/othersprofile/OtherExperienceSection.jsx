@@ -12,8 +12,8 @@ export default function OtherExperienceSection({ experience }) {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-5 h-full flex flex-col min-h-[500px] max-h-[600px]">
+      <div className="flex-shrink-0 flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold text-text dark:text-text-dark">
           Experiences
         </h3>
@@ -25,8 +25,8 @@ export default function OtherExperienceSection({ experience }) {
         )}
       </div>
 
-      {/* Scrollable Experiences List - শুধুমাত্র ২+ Experience থাকলে স্ক্রল হবে */}
-      <div className={`flex-1 ${experience.length >= 2 ? 'overflow-y-auto pr-2' : ''}`}>
+      {/* Scrollable Experiences List */}
+      <div className="flex-1 overflow-y-auto pr-2">
         {experience.length === 0 ? (
           <div className="text-center py-8">
             <div className="inline-block p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
@@ -38,7 +38,7 @@ export default function OtherExperienceSection({ experience }) {
             <p className="text-gray-500 dark:text-gray-400">No experiences added yet.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pb-2">
             {experience.map((exp, index) => (
               <OtherExperienceItem 
                 key={exp.id || index} 
