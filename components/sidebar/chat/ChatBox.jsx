@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Send, Smile, Paperclip, ChevronLeft, MoreVertical } from "lucide-react";
-import ChatHeader from "./ChatHeader";
 
 export default function ChatBox({ 
   conversation, 
@@ -15,8 +14,10 @@ export default function ChatBox({
 }) {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     scrollToBottom();
@@ -24,6 +25,18 @@ export default function ChatBox({
       setTimeout(() => inputRef.current.focus(), 100);
     }
   }, [conversation.messages]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,6 +72,31 @@ export default function ChatBox({
     });
   };
 
+  const handleProfileClick = () => {
+    if (conversation?.user && setSelectedProfile) {
+      setSelectedProfile({
+        user_id: conversation.user.id,
+        name: conversation.user.name,
+        profile_image: conversation.user.avatar,
+        email: conversation.user.email
+      });
+    }
+  };
+
+  const handleClearChat = () => {
+    if (window.confirm("Are you sure you want to clear this chat?")) {
+      // In a real app, you would call an API to clear chat
+      console.log("Clear chat for conversation:", conversation.id);
+      setShowMenu(false);
+    }
+  };
+
+  const handleMuteNotifications = () => {
+    // In a real app, you would call an API to mute notifications
+    console.log("Mute notifications for conversation:", conversation.id);
+    setShowMenu(false);
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with Back Button */}
@@ -73,16 +111,7 @@ export default function ChatBox({
           
           {/* Clickable User Info */}
           <button 
-            onClick={() => {
-              if (conversation?.user && setSelectedProfile) {
-                setSelectedProfile({
-                  user_id: conversation.user.id,
-                  name: conversation.user.name,
-                  profile_image: conversation.user.avatar,
-                  email: conversation.user.email
-                });
-              }
-            }}
+            onClick={handleProfileClick}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <img
@@ -101,9 +130,38 @@ export default function ChatBox({
           </button>
         </div>
         
-        <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-          <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-        </button>
+        {/* Three Dots Menu */}
+        <div className="relative" ref={menuRef}>
+          <button 
+            onClick={() => setShowMenu(!showMenu)}
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+          
+          {showMenu && (
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+              <button 
+                onClick={handleProfileClick}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                View Profile
+              </button>
+              <button 
+                onClick={handleMuteNotifications}
+                className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Mute Notifications
+              </button>
+              <button 
+                onClick={handleClearChat}
+                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Clear Chat
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Messages Area */}

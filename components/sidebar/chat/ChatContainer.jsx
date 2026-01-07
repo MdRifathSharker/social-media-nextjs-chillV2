@@ -144,7 +144,7 @@ const createDummyConversations = (currentUserId) => [
 export default function ChatContainer({ 
   currentUser, 
   setSelectedProfile,
-  compactMode = true  // Always true now
+  compactMode = true
 }) {
   const [conversations, setConversations] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
@@ -155,7 +155,7 @@ export default function ChatContainer({
       setIsLoading(true);
       setTimeout(() => {
         setConversations(createDummyConversations(currentUser.user_id));
-        setActiveChat("1"); // Default to first conversation
+        // Don't set activeChat by default - show chat list first
         setIsLoading(false);
       }, 500);
     }
@@ -185,27 +185,28 @@ export default function ChatContainer({
     );
   }
 
-  // Always show compact mode (chat list OR chat box)
+  // Always show chat list first when clicking chat button
+  if (!activeChat) {
+    return (
+      <ChatList
+        conversations={conversations}
+        activeChat={activeChat}
+        setActiveChat={setActiveChat}
+        currentUser={currentUser}
+        compactMode={true}
+      />
+    );
+  }
+
+  // Show chat box when a conversation is selected
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {activeChat ? (
-        <ChatBox
-          conversation={activeConversation}
-          currentUser={currentUser}
-          onSendMessage={handleSendMessage}
-          onBack={() => setActiveChat(null)}
-          setSelectedProfile={setSelectedProfile}
-          compactMode={true}
-        />
-      ) : (
-        <ChatList
-          conversations={conversations}
-          activeChat={activeChat}
-          setActiveChat={setActiveChat}
-          currentUser={currentUser}
-          compactMode={true}
-        />
-      )}
-    </div>
+    <ChatBox
+      conversation={activeConversation}
+      currentUser={currentUser}
+      onSendMessage={handleSendMessage}
+      onBack={() => setActiveChat(null)}
+      setSelectedProfile={setSelectedProfile}
+      compactMode={true}
+    />
   );
 }

@@ -1,12 +1,11 @@
-// components/sidebar/SidebarBottomNav.jsx - UPDATED VERSION
+// components/sidebar/SidebarBottomNav.jsx
 "use client";
 
 import { Users, MessageCircle, Bell, User } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function SidebarBottomNav({ activeTab, setActiveTab }) {
-  const [unreadMessages, setUnreadMessages] = useState(3); // Example: 3 unread messages
-  const [showChat, setShowChat] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(3);
 
   const base = "flex flex-col items-center justify-center py-3 transition relative";
   const active = "bg-primary text-white";
@@ -15,9 +14,11 @@ export default function SidebarBottomNav({ activeTab, setActiveTab }) {
   // Simulate receiving new messages
   useEffect(() => {
     const interval = setInterval(() => {
-      // In real app, you'd fetch from API/WebSocket
-      setUnreadMessages(prev => Math.min(prev + Math.floor(Math.random()), 99));
-    }, 30000);
+      // Randomly add new messages
+      if (Math.random() > 0.7) {
+        setUnreadMessages(prev => Math.min(prev + 1, 99));
+      }
+    }, 10000); // Check every 10 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -65,14 +66,8 @@ export default function SidebarBottomNav({ activeTab, setActiveTab }) {
           onClick={() => setActiveTab("notification")}
           className={`${base} ${activeTab === "notification" ? active : inactive}`}
         >
-          <div className="relative">
-            <Bell size={22} />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-          </div>
+          <Bell size={22} />
           <span className="text-xs mt-1">Notification</span>
-          <span className="absolute top-1 right-4 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-            5
-          </span>
         </button>
 
         <button

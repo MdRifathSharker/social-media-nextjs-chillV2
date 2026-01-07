@@ -1,4 +1,4 @@
-// components/sidebar/chat/ChatList.jsx (Updated for compact mode)
+// components/sidebar/chat/ChatList.jsx
 "use client";
 
 import { useState, useEffect } from "react";
