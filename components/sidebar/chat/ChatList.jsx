@@ -252,11 +252,6 @@ export default function ChatList({
                           <h4 className="font-medium text-gray-800 dark:text-white truncate">
                             {conversation.otherUser.name}
                           </h4>
-                          {conversation.otherUser.username && (
-                            <span className="text-xs text-gray-500">
-                              @{conversation.otherUser.username}
-                            </span>
-                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">
@@ -314,18 +309,8 @@ export default function ChatList({
                         <h4 className="font-medium text-gray-800 dark:text-white">
                           {user.name}
                         </h4>
-                        <p className="text-xs text-gray-500">
-                          {user.username ? `@${user.username}` : user.email}
-                        </p>
                       </div>
                     </div>
-                    {/* <button
-                      onClick={() => handleStartChat(user)}
-                      className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                      disabled={isStartingChat} // Optional: add loading state
-                    >
-                      Message
-                    </button> */}
                     <button
                       onClick={() => handleStartChat(user)}
                       className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"

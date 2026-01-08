@@ -9,7 +9,7 @@ export default function ChatSection({ currentUser, setSelectedProfile }) {
 
   useEffect(() => {
     // Simulate loading
-    setTimeout(() => setIsLoading(false), 300);
+    setTimeout(() => setIsLoading(false), 100);
   }, []);
 
   return (
@@ -31,7 +31,6 @@ export default function ChatSection({ currentUser, setSelectedProfile }) {
           />
         )}
       </div>
-      
       {/* Status Info - Removed */}
     </div>
   );

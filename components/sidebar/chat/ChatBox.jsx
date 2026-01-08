@@ -223,15 +223,6 @@ export default function ChatBox({
               >
                 View Profile
               </button>
-              <button className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                Mute Notifications
-              </button>
-              <button 
-                onClick={handleClearChat}
-                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                Clear Chat
-              </button>
             </div>
           )}
         </div>
@@ -295,15 +286,6 @@ export default function ChatBox({
 
       {/* Message Input */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-            <Paperclip className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
-          
-          <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-            <Smile className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-          </button>
-
           <div className="flex-1 relative">
             <input
               ref={inputRef}
@@ -327,7 +309,6 @@ export default function ChatBox({
               </button>
             )}
           </div>
-        </div>
       </div>
     </div>
   );

@@ -15,13 +15,13 @@ export const chatService = {
       
       let query = supabase
         .from('users')
-        .select('user_id, name, username, profile_image, bio, email, is_online, last_seen')
+        .select('user_id, name, profile_image, bio, email, is_online, last_seen')
         .neq('user_id', currentUserId) // Exclude current user
         .order('name', { ascending: true });
 
       // Add search filter if provided
       if (searchQuery && searchQuery.trim() !== "") {
-        query = query.or(`name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+        query = query.or(`name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
       }
 
       query = query.limit(limit);
@@ -38,7 +38,6 @@ export const chatService = {
         id: user.user_id,
         user_id: user.user_id,
         name: user.name,
-        username: user.username,
         profile_image: user.profile_image || "/default-avatar.png",
         bio: user.bio || "",
         email: user.email,
@@ -101,12 +100,12 @@ export const chatService = {
       // Get user details
       let userQuery = supabase
         .from('users')
-        .select('user_id, name, username, profile_image, bio, email, is_online, last_seen')
+        .select('user_id, name, profile_image, bio, email, is_online, last_seen')
         .in('user_id', allUserIds);
 
       // Add search filter if provided
       if (searchQuery && searchQuery.trim() !== "") {
-        userQuery = userQuery.or(`name.ilike.%${searchQuery}%,username.ilike.%${searchQuery}%`);
+        userQuery = userQuery.or(`name.ilike.%${searchQuery}%`);
       }
 
       const { data: usersData, error: usersError } = await userQuery;
@@ -121,7 +120,6 @@ export const chatService = {
         id: user.user_id,
         user_id: user.user_id,
         name: user.name,
-        username: user.username,
         profile_image: user.profile_image || "/default-avatar.png",
         bio: user.bio || "",
         email: user.email,
@@ -246,7 +244,6 @@ export const chatService = {
           user1:users!conversations_user1_id_fkey (
             user_id,
             name,
-            username,
             profile_image,
             bio,
             email,
@@ -256,7 +253,6 @@ export const chatService = {
           user2:users!conversations_user2_id_fkey (
             user_id,
             name,
-            username,
             profile_image,
             bio,
             email,
@@ -302,7 +298,6 @@ export const chatService = {
             id: otherUser?.user_id,
             user_id: otherUser?.user_id,
             name: otherUser?.name || "Unknown User",
-            username: otherUser?.username || "",
             profile_image: otherUser?.profile_image || "/default-avatar.png",
             bio: otherUser?.bio || "",
             email: otherUser?.email || "",

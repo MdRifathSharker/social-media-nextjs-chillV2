@@ -219,7 +219,7 @@ export default function ChatContainer({
             id: user.user_id,
             user_id: user.user_id,
             name: user.name,
-            username: user.username,
+            //username: user.username,
             profile_image: user.profile_image || "/default-avatar.png",
             bio: user.bio || "",
             email: user.email || "",
