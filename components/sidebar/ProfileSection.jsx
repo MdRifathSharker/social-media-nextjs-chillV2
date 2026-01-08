@@ -36,7 +36,7 @@ export default function ProfileSection({ currentUser }) {
     fetchUserData();
     
     // Ensure storage bucket exists on load
-    storageService.ensureBucketExists();
+    //storageService.ensureBucketExists();
   }, [currentUser]);
 
   const fetchUserData = async () => {
