@@ -44,7 +44,7 @@ export default function Sidebar({ currentUser, setSelectedProfile }) {
   };
 
   return (
-    <div className="w-80 h-full bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className="w-1/4 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg h-full flex flex-col">      {/* Main Content Area */}
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         {renderActiveSection()}
