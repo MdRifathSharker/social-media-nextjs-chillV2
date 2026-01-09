@@ -245,7 +245,7 @@ export default function ChatBox({
             new Date(conversation.messages[index - 1].timestamp).toDateString();
           
           return (
-            <div key={message.id}>
+            <div key={`${message.id}-${message.created_at || Date.now()}`}>  
               {showDate && (
                 <div className="text-center my-4">
                   <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full">
