@@ -1,8 +1,7 @@
 // components/sidebar/chat/ChatContainer.jsx - FULL FIXED CODE
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ChatList from "./ChatList";
 import ChatBox from "./ChatBox";
 import { chatService } from "@/utils/chatService";
@@ -23,6 +22,9 @@ export default function ChatContainer({
   const [messages, setMessages] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const [isStartingNewChat, setIsStartingNewChat] = useState(false);
+  
+  // ✅ Refs to track subscriptions
+  const channelRef = useRef(null);
 
   // Load user's conversations
   useEffect(() => {
@@ -56,10 +58,27 @@ export default function ChatContainer({
     loadConversations();
   }, [currentUser]);
 
-  // Realtime subscription for new messages
-  useEffect(() => {
+  // ✅ Function to setup realtime subscription
+  const setupRealtimeSubscription = useCallback(() => {
     if (!currentUser?.user_id || conversations.length === 0) return;
 
+    // Clean up existing subscription
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    // Get all conversation IDs
+    const conversationIds = conversations.map(c => c.id);
+    
+    // If no conversations yet, don't setup subscription
+    if (conversationIds.length === 0) {
+      console.log("No conversations to subscribe to");
+      return;
+    }
+
+    console.log("Setting up subscription for conversations:", conversationIds);
+
+    // Create new subscription
     const channel = supabase
       .channel('messages-channel')
       .on(
@@ -68,22 +87,33 @@ export default function ChatContainer({
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `conversation_id=in.(${conversations.map(c => c.id).join(',')})`
+          filter: `conversation_id=in.(${conversationIds.join(',')})`
         },
         async (payload) => {
           const newMessage = payload.new;
-          console.log("🆕 New message received:", newMessage);
+          console.log("🆕 New message received via realtime:", newMessage);
           
-          // Add message to state
-          setMessages(prev => ({
-            ...prev,
-            [newMessage.conversation_id]: [
-              ...(prev[newMessage.conversation_id] || []),
-              newMessage
-            ]
-          }));
+          // ✅ Update messages state IMMEDIATELY
+          setMessages(prev => {
+            const existingMessages = prev[newMessage.conversation_id] || [];
+            
+            // Check if message already exists (prevent duplicates)
+            const alreadyExists = existingMessages.some(msg => msg.id === newMessage.id);
+            if (alreadyExists) {
+              console.log("Message already exists, skipping:", newMessage.id);
+              return prev;
+            }
+            
+            return {
+              ...prev,
+              [newMessage.conversation_id]: [
+                ...existingMessages,
+                newMessage
+              ]
+            };
+          });
 
-          // Update conversation last message time
+          // ✅ Update conversation last message time
           setConversations(prev => 
             prev.map(conv => 
               conv.id === newMessage.conversation_id
@@ -105,18 +135,65 @@ export default function ChatContainer({
             )
           );
 
-          // Mark as read if it's the active chat
+          // ✅ Mark as read if it's the active chat
           if (activeChat === newMessage.conversation_id && newMessage.sender_id !== currentUser.user_id) {
             await chatService.markMessagesAsRead(newMessage.conversation_id, currentUser.user_id);
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
 
+    channelRef.current = channel;
+
+    // Cleanup on unmount
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [currentUser, conversations, activeChat]);
+
+  // ✅ Setup realtime subscription when conversations change
+  useEffect(() => {
+    setupRealtimeSubscription();
+  }, [setupRealtimeSubscription]);
+
+  // ✅ Function to reload conversations (call this when new conversation is created)
+  const reloadConversations = useCallback(async () => {
+    if (!currentUser?.user_id) return;
+    
+    try {
+      setIsLoading(true);
+      const { success, conversations: convs } = await chatService.getUserConversations(currentUser.user_id);
+      
+      if (success) {
+        console.log("Reloaded conversations:", convs.length);
+        setConversations(convs);
+        
+        // Load messages for each conversation
+        const messagesMap = {};
+        for (const conv of convs) {
+          const { success: msgSuccess, messages: msgs } = await chatService.getMessages(conv.id);
+          if (msgSuccess && msgs.length > 0) {
+            messagesMap[conv.id] = msgs;
+          } else {
+            messagesMap[conv.id] = [];
+          }
+        }
+        setMessages(messagesMap);
+        
+        // ✅ Re-setup subscription with new conversations
+        setupRealtimeSubscription();
+      }
+    } catch (error) {
+      console.error("Error reloading conversations:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUser, setupRealtimeSubscription]);
 
   const handleSendMessage = async (message) => {
     if (!activeChat || !message.text.trim() || !currentUser?.user_id) return;
@@ -129,31 +206,8 @@ export default function ChatContainer({
       );
 
       if (success && sentMessage) {
-        // Update messages state
-        setMessages(prev => ({
-          ...prev,
-          [activeChat]: [...(prev[activeChat] || []), sentMessage]
-        }));
-
-        // Update conversation
-        setConversations(prev => 
-          prev.map(conv => 
-            conv.id === activeChat
-              ? { 
-                  ...conv, 
-                  last_message_at: sentMessage.created_at,
-                  lastMessage: {
-                    text: sentMessage.message_text,
-                    senderId: sentMessage.sender_id,
-                    timestamp: sentMessage.created_at,
-                    read: sentMessage.read,
-                    delivered: sentMessage.delivered
-                  },
-                  unreadCount: 0
-                }
-              : conv
-          )
-        );
+        console.log("✅ Message sent successfully:", sentMessage.id);
+        // Real-time subscription will handle the update
       } else {
         console.error("Error sending message:", error);
       }
@@ -163,7 +217,16 @@ export default function ChatContainer({
   };
 
   const handleSelectChat = async (conversationId) => {
+    console.log("Selecting chat:", conversationId);
     setActiveChat(conversationId);
+    
+    // Load messages if not already loaded
+    if (!messages[conversationId] || messages[conversationId].length === 0) {
+      const { success, messages: msgs } = await chatService.getMessages(conversationId);
+      if (success) {
+        setMessages(prev => ({ ...prev, [conversationId]: msgs }));
+      }
+    }
     
     // Mark messages as read
     if (currentUser?.user_id) {
@@ -178,24 +241,16 @@ export default function ChatContainer({
         )
       );
     }
-    
-    // Load messages if not already loaded
-    if (!messages[conversationId]) {
-      const { success, messages: msgs } = await chatService.getMessages(conversationId);
-      if (success) {
-        setMessages(prev => ({ ...prev, [conversationId]: msgs }));
-      }
-    }
   };
 
   const handleStartNewChat = async (user) => {
     if (!currentUser?.user_id || !user.user_id) return;
     
     setIsStartingNewChat(true);
+    console.log("🆕 Starting new chat with user:", user.user_id);
     
     try {
-      console.log("🆕 Starting new chat with:", user.user_id);
-      
+      // 1. Create new conversation
       const { success, conversation, error } = await chatService.startNewConversation(
         currentUser.user_id,
         user.user_id
@@ -204,50 +259,13 @@ export default function ChatContainer({
       if (success && conversation) {
         console.log("✅ Conversation created:", conversation.id);
         
-        // 1. Set activeChat immediately
+        // 2. Set active chat immediately
         setActiveChat(conversation.id);
         
-        // 2. Create conversation object
-        const newConversation = {
-          id: conversation.id,
-          conversation_id: conversation.id,
-          user1_id: conversation.user1_id,
-          user2_id: conversation.user2_id,
-          last_message_at: conversation.last_message_at,
-          created_at: conversation.created_at,
-          otherUser: {
-            id: user.user_id,
-            user_id: user.user_id,
-            name: user.name,
-            //username: user.username,
-            profile_image: user.profile_image || "/default-avatar.png",
-            bio: user.bio || "",
-            email: user.email || "",
-            online: user.online || false,
-            lastSeen: user.lastSeen || "never"
-          },
-          lastMessage: null,
-          unreadCount: 0
-        };
+        // 3. Reload ALL conversations to get the new one
+        await reloadConversations();
         
-        // 3. Add to conversations list
-        setConversations(prev => {
-          // Remove if already exists
-          const filtered = prev.filter(c => c.id !== conversation.id);
-          return [newConversation, ...filtered];
-        });
-        
-        // 4. Initialize empty messages
-        setMessages(prev => ({
-          ...prev,
-          [conversation.id]: []
-        }));
-        
-        // 5. Mark as read
-        await chatService.markMessagesAsRead(conversation.id, currentUser.user_id);
-        
-        console.log("✅ Chat started successfully");
-        
+        console.log("✅ Chat started successfully, activeChat:", conversation.id);
       } else {
         console.error("❌ Failed to start conversation:", error);
         alert("Failed to start conversation. Please try again.");
@@ -276,7 +294,6 @@ export default function ChatContainer({
     );
   }
 
-  // 🚨 IMPORTANT FIX: Check if starting new chat
   if (isStartingNewChat) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -286,7 +303,7 @@ export default function ChatContainer({
     );
   }
 
-  // 🚨 IMPORTANT FIX: Check if activeConversation exists
+  // ✅ Show loading state if active chat is selected but conversation not loaded yet
   if (activeChat && !activeConversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
@@ -305,6 +322,7 @@ export default function ChatContainer({
         currentUser={currentUser}
         compactMode={true}
         onStartNewChat={handleStartNewChat}
+        onReloadConversations={reloadConversations}
       />
     );
   }

@@ -101,6 +101,13 @@ export default function ChatList({
     if (!currentUser?.user_id || !user.user_id) return;
     
     try {
+      console.log("Starting chat with user:", user.user_id);
+      
+    // Call the parent's function (which will handle reloading conversations)
+    if (onStartNewChat) {
+      await onStartNewChat(user);
+    } else {
+      // Fallback: start conversation directly
       // Start new conversation
       const { success, conversation, error } = await chatService.startNewConversation(
         currentUser.user_id,
@@ -116,9 +123,10 @@ export default function ChatList({
       } else {
         console.error("Failed to start conversation:", error);
       }
-    } catch (error) {
-      console.error("Error starting chat:", error);
-    }
+    } 
+  } catch (error) {
+    console.error("Error starting chat:", error);
+  }
   };
 
   const clearSearch = () => {

@@ -69,7 +69,7 @@ export default function ChatBox({
     lastSendTimeRef.current = Date.now();
     
     const message = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id:  crypto.randomUUID ? crypto.randomUUID() : `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: newMessage.trim(),
       senderId: currentUser.user_id,
       timestamp: new Date().toISOString(),
@@ -79,9 +79,11 @@ export default function ChatBox({
     
     console.log("Sending message with ID:", message.id);
     
+    // ✅ Clear input first
     const messageToSend = message;
     setNewMessage("");
     
+    // ✅ Call onSendMessage (this will trigger realtime update)
     onSendMessage(messageToSend);
     
     if (typingTimeout) {
@@ -89,6 +91,7 @@ export default function ChatBox({
       setTypingTimeout(null);
     }
     
+    // ✅ Reset sending state
     setTimeout(() => {
       setIsSending(false);
     }, 500);
