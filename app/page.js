@@ -526,7 +526,7 @@ export default function Home() {
       const result = await checkUserForPasswordReset(email);
 
       if (result.error) {
-        setErrorMessage(result.error);
+        setErrorMessage("No account found with this email");
         setLoading(false);
         return;
       }
@@ -574,7 +574,7 @@ export default function Home() {
     }
 
     if (userEnteredOtp !== systemOtp) {
-      setErrorMessage("Invalid OTP");
+      setErrorMessage("Invalid OTP! Please try again.");
       return;
     }
 
@@ -699,12 +699,16 @@ export default function Home() {
 
       if (!user) {
         console.log("User not found:", email);
-        return { error: "Invalid email or password" };
+        setErrorMessage("Invalid email! Email not registered.");
+        setLoading(false);
+        return ;
       }
 
       if (!user.password) {
         console.log("Password not set for user:", email);
-        return { error: "Account setup incomplete. Please contact support." };
+        setErrorMessage("Account setup incomplete. Please contact support.");
+        setLoading(false);
+        return;
       }
 
       // Verify password
@@ -713,10 +717,12 @@ export default function Home() {
 
       if (!isValid) {
         console.log("Invalid password for:", email);
-        return { error: "Invalid email or password" };
+        setErrorMessage("Invalid password! Please try again.");
+        setLoading(false);
+        return ;
       }
 
-      console.log("✅ Login successful for:", email);
+      console.log("Login successful for:", email);
 
       // Store user data in localStorage
       if (typeof window !== 'undefined') {
@@ -733,7 +739,7 @@ export default function Home() {
         // Store complete user object (for profile section)
         localStorage.setItem('currentUser', JSON.stringify(user));
         
-        console.log("📝 User data stored in localStorage:", {
+        console.log("User data stored in localStorage:", {
           userId: user.user_id,
           name: user.name,
           email: user.email
@@ -866,7 +872,7 @@ export default function Home() {
                   ? "bg-yellow-100 border border-yellow-300 text-yellow-700"
                   : "bg-red-100 border border-red-300 text-red-700"
                 }`}>
-                {errorMessage.includes("✅") ? "✅" : "⚠️"} {errorMessage}
+                {errorMessage.includes(" ") ? " " : " "} {errorMessage}
               </div>
             )}
 
