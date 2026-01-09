@@ -1,7 +1,7 @@
 // components/sidebar/chat/ChatBox.jsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Send, Smile, Paperclip, ChevronLeft, MoreVertical, Check, CheckCheck } from "lucide-react";
 import { createClient } from '@supabase/supabase-js';
 
@@ -20,9 +20,12 @@ export default function ChatBox({
   const [newMessage, setNewMessage] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
+  const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const menuRef = useRef(null);
+  const lastMessageRef = useRef("");
+  const lastSendTimeRef = useRef(0);
 
   useEffect(() => {
     scrollToBottom();
@@ -47,11 +50,26 @@ export default function ChatBox({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
+  const handleSendMessage = useCallback(() => {
+    if (newMessage.trim() === "" || 
+        isSending || 
+        newMessage.trim() === lastMessageRef.current ||
+        (Date.now() - lastSendTimeRef.current) < 500) {
+      console.log("Message send blocked:", {
+        empty: newMessage.trim() === "",
+        sending: isSending,
+        sameAsLast: newMessage.trim() === lastMessageRef.current,
+        tooFast: (Date.now() - lastSendTimeRef.current) < 500
+      });
+      return;
+    }
+    
+    setIsSending(true);
+    lastMessageRef.current = newMessage.trim();
+    lastSendTimeRef.current = Date.now();
     
     const message = {
-      id: crypto.randomUUID(), // ✅ Browser built-in UUID
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: newMessage.trim(),
       senderId: currentUser.user_id,
       timestamp: new Date().toISOString(),
@@ -59,23 +77,28 @@ export default function ChatBox({
       read: false
     };
     
-    onSendMessage(message);
+    console.log("Sending message with ID:", message.id);
+    
+    const messageToSend = message;
     setNewMessage("");
     
-    // Stop typing indicator
+    onSendMessage(messageToSend);
+    
     if (typingTimeout) {
       clearTimeout(typingTimeout);
       setTypingTimeout(null);
     }
-  };
+    
+    setTimeout(() => {
+      setIsSending(false);
+    }, 500);
+  }, [newMessage, isSending, onSendMessage, currentUser.user_id, typingTimeout]);
 
   const handleTyping = async () => {
-    // Clear existing timeout
     if (typingTimeout) {
       clearTimeout(typingTimeout);
     }
     
-    // Send typing indicator to other user
     if (conversation.id && currentUser?.user_id) {
       try {
         await supabase.channel(`typing-${conversation.id}`).send({
@@ -88,7 +111,6 @@ export default function ChatBox({
       }
     }
     
-    // Set new timeout to stop typing after 1 second
     const timeout = setTimeout(() => {
       // Typing stopped
     }, 1000);
@@ -96,13 +118,18 @@ export default function ChatBox({
     setTypingTimeout(timeout);
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = useCallback((e) => {
     handleTyping();
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      e.stopPropagation();
+      
+      setTimeout(() => {
+        handleSendMessage();
+      }, 10);
     }
-  };
+  }, [handleTyping, handleSendMessage]);
 
   const formatTime = (timestamp) => {
     try {
@@ -159,6 +186,20 @@ export default function ChatBox({
     }
   };
 
+  const getUniqueMessages = (messages) => {
+    const seenIds = new Set();
+    return messages.filter(msg => {
+      if (seenIds.has(msg.id)) {
+        console.log("Found duplicate message ID:", msg.id);
+        return false;
+      }
+      seenIds.add(msg.id);
+      return true;
+    });
+  };
+
+  const uniqueMessages = getUniqueMessages(conversation.messages);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header with Back Button */}
@@ -171,7 +212,6 @@ export default function ChatBox({
             <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
           
-          {/* Clickable User Info */}
           <button 
             onClick={handleProfileClick}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -230,13 +270,13 @@ export default function ChatBox({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-3 bg-gray-50/50 dark:bg-gray-950/50">
-        {conversation.messages.map((message, index) => {
+        {uniqueMessages.map((message, index) => {
           const showDate = index === 0 || 
             new Date(message.timestamp).toDateString() !== 
-            new Date(conversation.messages[index - 1].timestamp).toDateString();
+            new Date(uniqueMessages[index - 1]?.timestamp).toDateString();
           
           return (
-            <div key={`${message.id}-${index}`}> {/* ✅ index যোগ করুন */}
+            <div key={`${message.id}-${index}-${message.timestamp}`}>
               {showDate && (
                 <div className="text-center my-4">
                   <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full">
@@ -286,29 +326,41 @@ export default function ChatBox({
 
       {/* Message Input */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          <div className="flex-1 relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={newMessage}
-              onChange={(e) => {
-                setNewMessage(e.target.value);
-                handleTyping();
+        <div className="flex-1 relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={newMessage}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              handleTyping();
+            }}
+            onKeyDown={handleKeyPress}
+            disabled={isSending}
+            placeholder={isSending ? "Sending..." : "Type a message..."}
+            className="w-full p-3 pr-12 bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm disabled:opacity-50"
+          />
+          
+          {newMessage.trim() && !isSending && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSendMessage();
               }}
-              onKeyPress={handleKeyPress}
-              placeholder="Type a message..."
-              className="w-full p-3 pr-12 bg-gray-100 dark:bg-gray-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-            />
-            
-            {newMessage.trim() && (
-              <button
-                onClick={handleSendMessage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+              disabled={isSending}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          )}
+          
+          {isSending && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
