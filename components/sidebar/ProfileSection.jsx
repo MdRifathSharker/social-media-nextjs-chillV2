@@ -67,7 +67,7 @@ export default function ProfileSection({ currentUser }) {
       const { data, error } = await fetchUserProfile(userId);
       
       if (error) {
-        console.error("❌ Profile fetch error:", error);
+        console.error(" Profile fetch error:", error);
         // Use data from localStorage
         const userName = localStorage.getItem("userName") || "User";
         setProfileData(prev => ({
@@ -76,7 +76,7 @@ export default function ProfileSection({ currentUser }) {
           headline: `${userName}'s Profile`
         }));
       } else if (data) {
-        console.log("✅ Profile data fetched:", data);
+        console.log(" Profile data fetched:", data);
         
         // Get profile image
         const { url: imageUrl } = await storageService.getProfileImageUrl(userId);
@@ -95,7 +95,7 @@ export default function ProfileSection({ currentUser }) {
       }
 
     } catch (error) {
-      console.error("❌ Error fetching user data:", error);
+      console.error("Error fetching user data:", error);
       // Set default data
       const userName = localStorage.getItem("userName") || "User";
       setProfileData(prev => ({
@@ -110,7 +110,7 @@ export default function ProfileSection({ currentUser }) {
 
   const getUserId = () => {
     if (currentUser?.user_id) {
-      console.log("✅ Using user_id from currentUser prop:", currentUser.user_id);
+      console.log(" Using user_id from currentUser prop:", currentUser.user_id);
       return currentUser.user_id;
     }
     
@@ -120,7 +120,7 @@ export default function ProfileSection({ currentUser }) {
       return userId;
     }
     
-    console.warn("⚠️ No user ID found");
+    console.warn(" No user ID found");
     return null;
   };
 
@@ -134,17 +134,17 @@ export default function ProfileSection({ currentUser }) {
 
     const userId = getUserId();
     if (!userId) {
-      alert("⚠️ Please log in to upload images");
+      alert(" Please log in to upload images");
       return;
     }
 
     if (!file.type.startsWith('image/')) {
-      alert("⚠️ Please select an image file (JPEG, PNG, GIF, WebP)");
+      alert("Please select an image file (JPEG, PNG, GIF, WebP)");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("⚠️ Image size should be less than 5MB");
+      alert("Image size should be less than 5MB");
       return;
     }
 
@@ -154,19 +154,19 @@ export default function ProfileSection({ currentUser }) {
       const result = await storageService.uploadProfileImage(userId, file);
       
       if (result.success) {
-        console.log("✅ Image uploaded successfully:", result.url);
+        console.log(" Image uploaded successfully:", result.url);
         setProfileData(prev => ({ 
           ...prev, 
           profileImageUrl: result.url 
         }));
-        alert("✅ Profile image updated successfully!");
+        alert("Profile image updated successfully!");
       } else {
-        console.error("❌ Upload failed:", result.error);
-        alert(`❌ Upload failed: ${result.error}`);
+        console.error(" Upload failed:", result.error);
+        alert(`Upload failed: ${result.error}`);
       }
     } catch (error) {
-      console.error("❌ Upload error:", error);
-      alert("❌ Upload failed. Please try again.");
+      console.error(" Upload error:", error);
+      alert(" Upload failed. Please try again.");
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) {
@@ -179,10 +179,10 @@ export default function ProfileSection({ currentUser }) {
     try {
       const userId = getUserId();
       if (!userId) {
-        throw new Error("⚠️ Please log in to update profile");
+        throw new Error(" Please log in to update profile");
       }
 
-      console.log("✏️ Updating profile for userId:", userId);
+      console.log(" Updating profile for userId:", userId);
       
       const { data, error } = await updateUserProfile(userId, {
         name: updatedData.name,
@@ -194,7 +194,7 @@ export default function ProfileSection({ currentUser }) {
 
       if (error) throw error;
 
-      console.log("✅ Profile updated successfully");
+      console.log(" Profile updated successfully");
       
       setProfileData(prev => ({
         ...prev,
@@ -208,7 +208,7 @@ export default function ProfileSection({ currentUser }) {
       setShowEditModal(false);
       return { success: true };
     } catch (error) {
-      console.error("❌ Update error:", error);
+      console.error("Update error:", error);
       return { success: false, error: error.message };
     }
   };
@@ -218,7 +218,7 @@ export default function ProfileSection({ currentUser }) {
       localStorage.clear();
     }
     
-    alert("✅ Logged out successfully!");
+    alert(" Logged out successfully!");
     window.location.href = "/";
   };
 
