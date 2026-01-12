@@ -890,11 +890,6 @@ export default function Home() {
                   <p className="text-white text-sm mt-2">OTP sent to:</p>
                   <p className="text-accent font-medium text-lg mt-1">{tempUserData?.email}</p>
 
-                  <div className="mt-4 p-3 bg-gray-800 rounded-lg">
-                    <p className="text-white text-xs mb-2">Your OTP Code (for testing):</p>
-                    <p className="text-white text-2xl font-bold tracking-widest">{systemOtp}</p>
-                    <p className="text-gray-400 text-xs mt-1">Enter this code above</p>
-                  </div>
                 </div>
 
                 <input
