@@ -77,8 +77,8 @@ const sendOTPEmail = async (email, otp, userName = "") => {
   };
 
   try {
-    console.log("📧 Sending OTP email to:", email);
-    console.log("📤 Template params:", { ...templateParams, password: "***" });
+    console.log("Sending OTP email to:", email);
+    console.log("Template params:", { ...templateParams, password: "***" });
 
     const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
     const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
@@ -150,7 +150,7 @@ const completeUserRegistration = async (email, password, name, contact = "") => 
       updated_at: new Date().toISOString()
     };
 
-    console.log("📝 Inserting user record:", { ...userRecord, password: "***" });
+    console.log("Inserting user record:", { ...userRecord, password: "***" });
 
     // Insert into database
     const { data, error } = await supabase
@@ -878,7 +878,7 @@ export default function Home() {
 
             {successMessage && (
               <div className="p-3 bg-green-100 border border-green-300 text-green-700 rounded-lg text-sm">
-                ✅ {successMessage}
+                {successMessage}
               </div>
             )}
 

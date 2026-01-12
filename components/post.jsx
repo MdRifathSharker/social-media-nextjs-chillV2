@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
+import { Share2 } from "lucide-react";
+
 
 export default function Post({ name, username, image, caption }) {
   const [upvotes, setUpvotes] = useState(124);
@@ -149,18 +152,23 @@ export default function Post({ name, username, image, caption }) {
         {/* Comments */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 opacity-70"
+          className="flex items-center gap-1 opacity-70 hover:opacity-100 transition"
         >
-          💬 {comments.length}
+         <MessageCircle className="w-4 h-4 transition-transform hover:scale-110" />
+
+          <span>{comments.length}</span>
         </button>
+
 
         {/* Share */}
         <button
           onClick={handleShare}
-          className="flex items-center gap-1 opacity-70"
+          className="flex items-center gap-1 opacity-70 hover:opacity-100 transition"
         >
-          🔗 Share
+          <Share2 className="w-4 h-4 transition-transform hover:scale-110" />
+          <span>Share</span>
         </button>
+
       </div>
 
       {/* Comments Section */}

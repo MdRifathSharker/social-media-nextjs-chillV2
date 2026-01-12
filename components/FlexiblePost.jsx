@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ShareModal from "@/components/ShareModal";
+import { MessageCircle, Share2 } from "lucide-react";
 import { 
   toggleLike, 
   getLikeCount, 
@@ -372,11 +373,11 @@ export default function FlexiblePost({
             {name}
           </button>
           <div className="flex items-center gap-2">
-            <p className="text-sm opacity-70">{username}</p>
+            
             {/* NEW: Timestamp display */}
             {createdAt && (
               <>
-                <span className="text-xs opacity-50">•</span>
+                
                 <p className="text-xs opacity-50">{formatTimestamp(createdAt)}</p>
               </>
             )}
@@ -520,20 +521,20 @@ export default function FlexiblePost({
 
         {/* Comments button */}
         <button
-          onClick={() => setShowComments(!showComments)}
-          className="flex items-center gap-1 opacity-70 hover:opacity-100"
-        >
-          💬 {comments.length}
-        </button>
+  onClick={() => setShowComments(!showComments)}
+  className="flex items-center gap-1 opacity-70 hover:opacity-100"
+>
+  <MessageCircle className="w-4 h-4 text-primary" /> {comments.length}
+</button>
 
         {/* Share button */}
         <button
-          onClick={handleShare}
-          disabled={!currentUserId}
-          className="flex items-center gap-1 opacity-70 hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          📤 {shareCount}
-        </button>
+  onClick={handleShare}
+  disabled={!currentUserId}
+  className="flex items-center gap-1 opacity-70 hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  <Share2 className="w-4 h-4 text-primary" /> {shareCount}
+</button>
       </div>
 
       {/* Comments Section */}

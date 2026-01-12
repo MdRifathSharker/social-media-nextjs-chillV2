@@ -133,24 +133,7 @@ export default function OtherProfileView({ user: initialUser, onBack, setSelecte
             <span className="text-sm font-semibold text-primary dark:text-accent">Back to Home</span>
           </button>
 
-          {/* Small Profile Info */}
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <p className="text-sm font-semibold text-text dark:text-text-dark">{user.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Viewing Profile</p>
-            </div>
-            <div className="w-10 h-10 rounded-full border-2 border-primary dark:border-accent overflow-hidden">
-              <img
-                src={user.profile_image || "/default-avatar.png"}
-                alt={user.name}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/default-avatar.png";
-                }}
-              />
-            </div>
-          </div>
+          
         </div>
       </div>
 

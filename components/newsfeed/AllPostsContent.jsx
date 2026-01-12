@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import FlexiblePost from "@/components/FlexiblePost";
 import { getFollowingUsersPosts } from "@/utils/posts";
+import { Loader2 } from "lucide-react";
 
 export default function AllPostsContent({ currentUser, setSelectedProfile }) {
   const [posts, setPosts] = useState([]);
@@ -68,7 +69,7 @@ export default function AllPostsContent({ currentUser, setSelectedProfile }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-2">⏳</div>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-2 text-primary" />
           <p className="text-gray-600 dark:text-gray-400">Loading posts...</p>
         </div>
       </div>

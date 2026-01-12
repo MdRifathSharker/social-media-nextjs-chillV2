@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import FlexiblePost from "@/components/FlexiblePost";
 import { getUserPosts, deletePost } from "@/utils/posts";
 
@@ -86,7 +87,7 @@ export default function MyPostsContentV2({ currentUser }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <div className="animate-spin text-4xl mb-2">â³</div>
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-2 text-primary" />
           <p className="text-gray-600 dark:text-gray-400">Loading your posts...</p>
         </div>
       </div>
@@ -109,7 +110,7 @@ export default function MyPostsContentV2({ currentUser }) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">ðŸ“ You haven't created any posts yet</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">You haven't created any posts yet</p>
           <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">Go to "Create Post" to share something!</p>
         </div>
       </div>
@@ -120,7 +121,7 @@ export default function MyPostsContentV2({ currentUser }) {
   return (
     <div className="space-y-4">
       <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-        ðŸ“Š You have {posts.length} post{posts.length !== 1 ? 's' : ''}
+        You have {posts.length} post{posts.length !== 1 ? 's' : ''}
       </div>
 
       {posts.map((post) => (
@@ -144,7 +145,7 @@ export default function MyPostsContentV2({ currentUser }) {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4 shadow-lg">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              ðŸ—‘ï¸ Delete Post?
+              Delete Post?
             </h2>
             
             <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -167,7 +168,7 @@ export default function MyPostsContentV2({ currentUser }) {
               >
                 {deleting ? (
                   <>
-                    <span className="animate-spin">â³</span> Deleting...
+                    <span className="animate-spin"></span> Deleting...
                   </>
                 ) : (
                   "Yes, Delete"

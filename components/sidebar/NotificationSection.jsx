@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { notificationService } from "@/utils/notificationService";
 import NotificationItem from "./lists/NotificationItem";
+import { Bug } from "lucide-react";
 
 export default function NotificationSection() {
   const [notifications, setNotifications] = useState([]);
@@ -273,12 +274,7 @@ export default function NotificationSection() {
     return (
       <div className="text-center py-8">
         <p className="text-gray-500 mb-4">No notifications yet</p>
-        <button 
-          onClick={debugNotifications}
-          className="text-sm text-blue-500 hover:underline"
-        >
-          Debug notifications
-        </button>
+        
       </div>
     );
   }
@@ -302,7 +298,7 @@ export default function NotificationSection() {
             className="text-xs text-gray-500 hover:underline"
             title="Debug"
           >
-            🐛
+            <Bug className="w-4 h-4" />
           </button>
           {unreadCount > 0 && (
             <button

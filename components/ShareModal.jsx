@@ -61,7 +61,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
         // Share to all followers
         const result = await sharePostToAllFollowers(postId, currentUserId);
         if (result.success) {
-          setMessage("✅ Shared with all followers!");
+          setMessage("Shared with all followers!");
           setTimeout(() => {
             onShareSuccess?.();
             onClose();
@@ -79,7 +79,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
         const allSuccess = results.every(r => r.success);
 
         if (allSuccess) {
-          setMessage(`✅ Shared with ${selectedFollowers.size} follower${selectedFollowers.size !== 1 ? 's' : ''}!`);
+          setMessage(`Shared with ${selectedFollowers.size} follower${selectedFollowers.size !== 1 ? 's' : ''}!`);
           setTimeout(() => {
             onShareSuccess?.();
             onClose();
@@ -108,7 +108,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
       await navigator.share(shareData);
     } else {
       await navigator.clipboard.writeText(window.location.href);
-      setMessage("✅ Link copied to clipboard!");
+      setMessage("Link copied to clipboard!");
       setTimeout(() => onClose(), 1500);
     }
   };
@@ -118,7 +118,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
       <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full shadow-lg">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h2 className="text-lg font-semibold">📤 Share Post</h2>
+          <h2 className="text-lg font-semibold">Share Post</h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl"
@@ -202,7 +202,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
           {/* Messages */}
           {message && (
             <div className={`p-3 rounded-lg text-sm ${
-              message.includes("✅")
+              message.includes("")
                 ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200"
                 : "bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200"
             }`}>
@@ -224,7 +224,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
             onClick={handleExternalShare}
             className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center gap-1"
           >
-            🔗 External
+            External
           </button>
 
           <button
@@ -238,7 +238,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
               </>
             ) : (
               <>
-                ✅ Share
+                Share
               </>
             )}
           </button>

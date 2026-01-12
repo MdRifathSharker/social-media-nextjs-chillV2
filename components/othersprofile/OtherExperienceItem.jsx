@@ -6,7 +6,7 @@ import { useState } from "react";
 export default function OtherExperienceItem({ exp, isExpanded, onToggle }) {
   const [isHovered, setIsHovered] = useState(false);
   
-  // Description ট্রান্কেট করার জন্য
+  
   const maxLength = 150;
   const shouldTruncate = exp.description && exp.description.length > maxLength && !isExpanded;
   const displayDescription = shouldTruncate 
@@ -24,7 +24,7 @@ export default function OtherExperienceItem({ exp, isExpanded, onToggle }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header Section - সবসময় দেখা যাবে */}
+      
       <div className="mb-3">
         <div className="flex justify-between items-start">
           <div>
@@ -60,7 +60,7 @@ export default function OtherExperienceItem({ exp, isExpanded, onToggle }) {
         </div>
       </div>
 
-      {/* Duration and Location - সবসময় দেখা যাবে */}
+      {/* Duration and Location */}
       <div className="flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400 mb-3">
         <div className="flex items-center gap-1">
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ export default function OtherExperienceItem({ exp, isExpanded, onToggle }) {
         )}
       </div>
 
-      {/* Description - কলাপ্স/এক্সপান্ড হবে */}
+      {/* Description */}
       {exp.description && (
         <div className="transition-all duration-300">
           <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 whitespace-pre-line">
@@ -119,7 +119,7 @@ export default function OtherExperienceItem({ exp, isExpanded, onToggle }) {
         </div>
       )}
 
-      {/* Skills - কলাপ্স/এক্সপান্ডের সাথে সাথে দেখা যাবে */}
+      {/* Skills  */}
       {exp.skills && exp.skills.length > 0 && (
         <div className={`flex flex-wrap gap-1.5 mt-3 transition-all duration-300 ${!isExpanded ? 'opacity-90' : ''}`}>
           {exp.skills.map((skill, i) => (
