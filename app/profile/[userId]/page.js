@@ -5,7 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import FlexiblePost from "@/components/FlexiblePost";
 import { getUserPosts, getUserProfile } from "@/utils/posts";
 import { getFollowersCount } from "@/utils/shares";
-import { isUserFollowing, toggleFollow } from "@/utils/follow";
+import {
+  checkIsFollowing,
+  followUser,
+  unfollowUser
+} from "@/utils/followService";
+
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -77,7 +82,8 @@ export default function UserProfilePage() {
 
     try {
       setLoadingFollow(true);
-      const result = await toggleFollow(currentUserId, userId);
+      const result = await checkIsFollowing(currentUserId, userId);
+
 
       if (result.success) {
         setIsFollowing(result.isFollowing);
