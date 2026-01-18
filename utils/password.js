@@ -9,12 +9,9 @@ const supabase = createClient(
   supabaseAnonKey || 'placeholder-anon-key'
 );
 
-/**
- * Check if user exists for password reset
- */
+
 export const checkUserForPasswordReset = async (email) => {
   try {
-    // Check in users table
     const { data, error } = await supabase
       .from('users')
       .select('email, user_id, name')
@@ -22,7 +19,6 @@ export const checkUserForPasswordReset = async (email) => {
       .single();
 
     if (error && error.code === 'PGRST116') {
-      // No user found
       return { error: 'No account found with this email address' };
     }
 
@@ -49,12 +45,6 @@ export const resetPassword = async (email, newPassword) => {
   try {
     console.log('Resetting password for:', email);
 
-    // First, we need to sign in the user to update password
-    // Note: This approach requires user to be authenticated
-    // Alternative approach: Use Supabase's reset password email flow
-    
-    // For now, we'll update the password in the users table
-    // and let the user login with new password
     const { error: userError } = await supabase
       .from('users')
       .update({ password: newPassword })
@@ -67,9 +57,7 @@ export const resetPassword = async (email, newPassword) => {
 
     console.log('Password updated in users table');
 
-    // Also try to update via Supabase Auth if possible
     try {
-      // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
@@ -100,9 +88,7 @@ export const resetPassword = async (email, newPassword) => {
   }
 };
 
-/**
- * Alternative method using Supabase's reset password email
- */
+
 export const sendPasswordResetEmail = async (email) => {
   try {
     const { data, error } = await supabase.auth.resetPasswordForEmail(

@@ -1,13 +1,12 @@
-// utils/storageServiceNoAuth.js
+
 import { createClient } from '@supabase/supabase-js';
 
-// Create Supabase client WITHOUT auth requirements
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const storageService = {
-  // Upload profile image (NO AUTH REQUIRED)
+
   async uploadProfileImage(userId, file) {
     try {
       console.log("📤 Uploading profile image for user (no auth):", userId);
@@ -28,7 +27,6 @@ export const storageService = {
         };
       }
 
-      // Validate file
       if (!file.type.startsWith('image/')) {
         return { 
           success: false, 
@@ -37,7 +35,7 @@ export const storageService = {
         };
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) { 
         return { 
           success: false, 
           url: null, 
@@ -51,7 +49,6 @@ export const storageService = {
 
       console.log("📁 Uploading to:", filePath);
 
-      // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, {
@@ -60,7 +57,7 @@ export const storageService = {
         });
 
       if (error) {
-        console.error("❌ Upload error:", error);
+        console.error("Upload error:", error);
         return { 
           success: false, 
           url: null, 
@@ -68,7 +65,7 @@ export const storageService = {
         };
       }
 
-      console.log("✅ Upload successful:", data);
+      console.log("Upload successful:", data);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage

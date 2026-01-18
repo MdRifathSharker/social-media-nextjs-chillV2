@@ -1,4 +1,3 @@
-// utils/followService.js
 "use client";
 
 import { createClient } from '@supabase/supabase-js';
@@ -7,12 +6,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ✅ NEW: Follow a user
 export const followUser = async (followerId, followingId) => {
   try {
     console.log("🔗 Following user:", { followerId, followingId });
     
-    // Check if already following
     const { data: existingFollow } = await supabase
       .from('followers')
       .select('*')
@@ -24,7 +21,6 @@ export const followUser = async (followerId, followingId) => {
       return { success: false, error: "Already following this user" };
     }
 
-    // Create follow relationship
     const { data, error } = await supabase
       .from('followers')
       .insert({
@@ -35,7 +31,6 @@ export const followUser = async (followerId, followingId) => {
 
     if (error) throw error;
 
-    // ✅ NEW: Update followers_count and following_count
     await updateFollowCounts(followerId, followingId, 'increment');
 
     console.log("✅ Successfully followed user");
@@ -46,7 +41,6 @@ export const followUser = async (followerId, followingId) => {
   }
 };
 
-// ✅ NEW: Unfollow a user
 export const unfollowUser = async (followerId, followingId) => {
   try {
     console.log("🔗 Unfollowing user:", { followerId, followingId });
@@ -59,10 +53,9 @@ export const unfollowUser = async (followerId, followingId) => {
 
     if (error) throw error;
 
-    // ✅ NEW: Update followers_count and following_count
     await updateFollowCounts(followerId, followingId, 'decrement');
 
-    console.log("✅ Successfully unfollowed user");
+    console.log(" Successfully unfollowed user");
     return { success: true };
   } catch (error) {
     console.error("❌ Error unfollowing user:", error);
@@ -70,7 +63,6 @@ export const unfollowUser = async (followerId, followingId) => {
   }
 };
 
-// ✅ NEW: Check if user is following another user
 export const checkIsFollowing = async (followerId, followingId) => {
   try {
     console.log("🔍 Checking follow status:", { followerId, followingId });
@@ -93,7 +85,6 @@ export const checkIsFollowing = async (followerId, followingId) => {
   }
 };
 
-// ✅ NEW: Get followers list
 export const getFollowers = async (userId) => {
   try {
     console.log("👥 Getting followers for:", userId);
@@ -123,10 +114,9 @@ export const getFollowers = async (userId) => {
   }
 };
 
-// ✅ NEW: Get following list
 export const getFollowing = async (userId) => {
   try {
-    console.log("👥 Getting following for:", userId);
+    console.log("Getting following for:", userId);
 
     const { data, error } = await supabase
       .from('followers')

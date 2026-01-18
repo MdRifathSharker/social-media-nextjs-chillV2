@@ -11,7 +11,6 @@ export default function SearchResultsDropdown({
 }) {
   const router = useRouter();
 
-  // Don't show dropdown if no results or no query
   if (!query || query.trim().length < 2) {
     return null;
   }

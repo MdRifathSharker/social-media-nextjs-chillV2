@@ -1,4 +1,3 @@
-// components/sidebar/chat/ChatBox.jsx
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";

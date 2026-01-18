@@ -1,4 +1,3 @@
-// utils/chatService.js
 "use client";
 
 import { createClient } from '@supabase/supabase-js';
@@ -8,7 +7,6 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const chatService = {
-  // ✅ Get all users from database (for search)
   async getAllUsers(currentUserId, searchQuery = "", limit = 20) {
     try {
       console.log("👥 Getting all users for chat search");
@@ -16,7 +14,7 @@ export const chatService = {
       let query = supabase
         .from('users')
         .select('user_id, name, profile_image, bio, email, is_online, last_seen')
-        .neq('user_id', currentUserId) // Exclude current user
+        .neq('user_id', currentUserId) 
         .order('name', { ascending: true });
 
       // Add search filter if provided

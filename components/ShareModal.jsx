@@ -8,10 +8,10 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
   const [selectedFollowers, setSelectedFollowers] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
-  const [shareType, setShareType] = useState("select"); // "select" or "all"
+  const [shareType, setShareType] = useState("select"); 
   const [message, setMessage] = useState("");
 
-  // Load followers on mount
+  
   useEffect(() => {
     const loadFollowers = async () => {
       try {
@@ -32,7 +32,7 @@ export default function ShareModal({ postId, currentUserId, onClose, onShareSucc
     loadFollowers();
   }, [currentUserId]);
 
-  // Toggle follower selection
+
   const toggleFollower = (followerId) => {
     const newSelected = new Set(selectedFollowers);
     if (newSelected.has(followerId)) {

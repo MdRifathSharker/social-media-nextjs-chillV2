@@ -15,7 +15,7 @@ export default function AllPostsContent({ currentUser, setSelectedProfile }) {
   const userId = currentUser?.user_id || (typeof window !== 'undefined' ? localStorage.getItem("userId") : null);
 
   const fetchPosts = useCallback(async (pageNum = 0) => {
-    if (!userId) {
+    if (!userId){
       setError("Please login to view posts");
       setLoading(false);
       return;
